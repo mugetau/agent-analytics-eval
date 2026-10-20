@@ -7,9 +7,10 @@
  *   npm run eval:agent -- --variant full,naive        run the same questions against several server variants and compare
  *   npm run eval:agent -- --variant all --trials 3    every variant (see src/variants.ts)
  *   npm run eval:agent -- --tier hard                 only the harder cases (core | hard | all, default all)
+ *   npm run eval:agent -- --prompt minimal            give the agent only answer-format rules, no guidance (default: guided)
  *   npm run eval:agent -- --case error-spike-day --model <model-id> --max-turns 8
  *
- * Agent mode needs ANTHROPIC_API_KEY. Results are written to results/<mode>-<variant>-<timestamp>.json.
+ * Agent mode needs ANTHROPIC_API_KEY. Results are written to results/<mode>-<variant>[-minimal]-<timestamp>.json.
  * Variants only apply to agent mode; the oracle needs the `full` server.
  */
 import Anthropic from "@anthropic-ai/sdk";
@@ -21,12 +22,7 @@ import { buildCases, type EvalCase } from "./cases.js";
 import { connectInMemory } from "./connect.js";
 import { grade, type Grade } from "./grade.js";
 import { VARIANTS, type Variant } from "../variants.js";
-
-const SYSTEM_PROMPT = `You are a product analytics assistant. Answer the user's question using ONLY the provided tools; never guess or use outside knowledge.
-Call get_schema first if you are unsure which events or properties exist. If the data cannot answer the question, say so instead of estimating.
-Finish with exactly one line in this form:
-FINAL ANSWER: <answer>
-Rules for the answer: a number is just the number (no units, no % sign); a date is YYYY-MM-DD; a category is just its name; if the data cannot answer the question, write FINAL ANSWER: UNANSWERABLE`;
+import { PROMPTS, PROMPT_NAMES, type PromptName } from "./prompts.js";
 
 interface ToolTraceEntry {
   name: string;
@@ -70,7 +66,7 @@ function traced(client: Client, trace: ToolTraceEntry[]): Client {
   });
 }
 
-async function runAgent(client: Client, question: string, model: string, maxTurns: number, trace: ToolTraceEntry[]) {
+async function runAgent(client: Client, question: string, model: string, maxTurns: number, systemPrompt: string, trace: ToolTraceEntry[]) {
   const anthropic = new Anthropic();
   const { tools } = await client.listTools();
   const claudeTools: Anthropic.Tool[] = tools.map((t) => ({
@@ -85,7 +81,7 @@ async function runAgent(client: Client, question: string, model: string, maxTurn
   let finalText = "";
 
   for (let turn = 0; turn < maxTurns; turn++) {
-    const response = await anthropic.messages.create({ model, max_tokens: 1500, system: SYSTEM_PROMPT, tools: claudeTools, messages });
+    const response = await anthropic.messages.create({ model, max_tokens: 1500, system: systemPrompt, tools: claudeTools, messages });
     inputTokens += response.usage.input_tokens;
     outputTokens += response.usage.output_tokens;
     messages.push({ role: "assistant", content: response.content });
@@ -123,7 +119,7 @@ interface CaseSummary {
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
-async function runOnce(client: Client, c: EvalCase, mode: "oracle" | "agent", model: string, maxTurns: number): Promise<CaseResult> {
+async function runOnce(client: Client, c: EvalCase, mode: "oracle" | "agent", model: string, maxTurns: number, systemPrompt: string): Promise<CaseResult> {
   const trace: ToolTraceEntry[] = [];
   let usage: { input?: number; output?: number } = {};
   let g: Grade;
@@ -132,7 +128,7 @@ async function runOnce(client: Client, c: EvalCase, mode: "oracle" | "agent", mo
     if (mode === "oracle") {
       answer = await c.oracle(traced(client, trace));
     } else {
-      const r = await runAgent(client, c.question, model, maxTurns, trace);
+      const r = await runAgent(client, c.question, model, maxTurns, systemPrompt, trace);
       answer = r.text;
       usage = { input: r.inputTokens, output: r.outputTokens };
     }
@@ -169,18 +165,18 @@ interface VariantReport {
 async function runVariant(
   variant: Variant,
   mode: "oracle" | "agent",
-  opts: { model: string; maxTurns: number; trials: number; only?: string; tier: string },
+  opts: { model: string; maxTurns: number; trials: number; only?: string; tier: string; prompt: PromptName },
 ): Promise<VariantReport> {
   const events = generateEvents();
   const client = await connectInMemory(events, variant);
   const cases = buildCases(events).filter((c) => (!opts.only || c.id === opts.only) && (opts.tier === "all" || (c.tier ?? "core") === opts.tier));
   if (cases.length === 0) throw new Error(`No case matches (case=${opts.only ?? "any"}, tier=${opts.tier})`);
 
-  console.log(`\n=== variant: ${variant.name} ===`);
+  console.log(`\n=== variant: ${variant.name}${mode === "agent" ? ` (prompt: ${opts.prompt})` : ""} ===`);
   const summaries: CaseSummary[] = [];
   for (const c of cases) {
     const runs: CaseResult[] = [];
-    for (let i = 0; i < opts.trials; i++) runs.push(await runOnce(client, c, mode, opts.model, opts.maxTurns));
+    for (let i = 0; i < opts.trials; i++) runs.push(await runOnce(client, c, mode, opts.model, opts.maxTurns, PROMPTS[opts.prompt]));
 
     const passes = runs.filter((r) => r.pass).length;
     const summary: CaseSummary = {
@@ -215,13 +211,14 @@ async function runVariant(
   );
 
   await mkdir("results", { recursive: true });
-  const file = `results/${mode}-${mode === "agent" ? `${variant.name}-` : ""}${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+  const file = `results/${mode}-${mode === "agent" ? `${variant.name}-${opts.prompt === "guided" ? "" : `${opts.prompt}-`}` : ""}${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
   await writeFile(
     file,
     JSON.stringify(
       {
         mode,
         variant: variant.name,
+        prompt: mode === "agent" ? opts.prompt : null,
         variant_settings: { richDescriptions: variant.richDescriptions, errorHints: variant.errorHints, precomputed: variant.precomputed },
         model: mode === "agent" ? opts.model : null,
         trials: opts.trials,
@@ -278,6 +275,7 @@ async function main() {
       trials: { type: "string", default: "1" },
       variant: { type: "string", default: "full" },
       tier: { type: "string", default: "all" },
+      prompt: { type: "string", default: "guided" },
     },
   });
   const mode = values.mode;
@@ -291,6 +289,9 @@ async function main() {
 
   if (!(["core", "hard", "all"] as string[]).includes(values.tier!)) throw new Error('--tier must be "core", "hard" or "all"');
 
+  const prompt = values.prompt as PromptName;
+  if (!PROMPT_NAMES.includes(prompt)) throw new Error(`--prompt must be one of: ${PROMPT_NAMES.join(", ")}`);
+
   const requested = values.variant === "all" ? Object.keys(VARIANTS) : values.variant!.split(",").map((v) => v.trim());
   const variants = requested.map((name) => {
     const v = VARIANTS[name];
@@ -303,7 +304,7 @@ async function main() {
 
   const reports: VariantReport[] = [];
   for (const v of variants) {
-    reports.push(await runVariant(v, mode, { model: values.model!, maxTurns: Number(values["max-turns"]), trials, only: values.case, tier: values.tier! }));
+    reports.push(await runVariant(v, mode, { model: values.model!, maxTurns: Number(values["max-turns"]), trials, only: values.case, tier: values.tier!, prompt }));
   }
   if (reports.length > 1) printComparison(reports);
 

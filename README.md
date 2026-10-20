@@ -16,7 +16,7 @@ Building for agents is different from building for people. An agent can't skim a
 | Query layer | `src/analytics.ts` | Pure functions: `schema`, `trend`, `funnel`, `breakdown`. Every error carries a hint that tells the agent how to fix its next call |
 | MCP server | `src/server.ts`, `src/index.ts` | Four tools over stdio, with descriptions written for agents |
 | Evals | `src/eval/` | 19 graded questions in two tiers, an **oracle** run (no LLM) and an **agent** run (Claude via the Anthropic API) |
-| Tests | `test/` | 45 tests, including "the tool surface can answer every eval question" |
+| Tests | `test/` | 48 tests, including "the tool surface can answer every eval question" |
 
 ## Quick start
 
@@ -49,6 +49,7 @@ export ANTHROPIC_API_KEY=...        # PowerShell: $env:ANTHROPIC_API_KEY = "..."
 npm run eval:agent -- --trials 3
 npm run eval:agent -- --variant full,naive --trials 3      # ablation: same questions, different server designs
 npm run eval:agent -- --tier hard --variant all --trials 3  # only the harder cases
+npm run eval:agent -- --tier hard --variant full,naive --prompt minimal --trials 3   # no guidance in the system prompt
 npm run eval:agent -- --case conversion-regression --model <model-id> --max-turns 8
 ```
 
@@ -124,6 +125,17 @@ npm run eval:agent -- --variant all --trials 3
 
 This writes one results file per variant and prints a comparison table (pass rate, tool calls, tokens per run, and a per-case matrix). Variants only apply to agent runs; the oracle needs the `full` server.
 
+### Prompts
+
+A server author doesn't control the client's system prompt, so how much guidance the prompt gives can hide weaknesses in the tool descriptions. `--prompt` selects one (`src/eval/prompts.ts`):
+
+| Prompt | What the agent is told |
+| --- | --- |
+| `guided` (default) | Use only the tools, never guess, check the schema first if unsure, say so instead of estimating, plus the answer-format rules |
+| `minimal` | Answer-format rules only |
+
+Both keep the format rules, because the grader reads a `FINAL ANSWER:` line, and both let the agent write `UNANSWERABLE`, so an abstention can be read. `minimal` does not tell the agent to check the schema or to look for missing data. A test pins `guided` to the exact text used for all earlier results, so old and new runs stay comparable. Result files for `minimal` runs have `-minimal` in their name and record the prompt in the JSON.
+
 ## Results
 
 ### Baseline (2026-10-20)
@@ -191,7 +203,7 @@ What this shows:
 
 ### Next
 
-1. Add a `--prompt minimal` option (no "check the schema first" and no "say UNANSWERABLE" guidance), since a server author doesn't control the client's system prompt. Re-run the hard tier on `full` vs `naive` with `--trials 3`.
+1. Run the hard tier with `--prompt minimal` on `full` vs `naive` with `--trials 3` (the option now exists; see Prompts above) and record the table here.
 2. If the variants still tie: test a larger tool surface (many more tools, where descriptions decide tool choice), or optimise for cost by shrinking the descriptions while the pass rate stays at 100%.
 3. Record what moved in this section, including results that show nothing.
 
@@ -200,7 +212,7 @@ What this shows:
 - The data is synthetic. Realistic enough to test tool use, but not a claim about real-world product data.
 - The core tier has only ten questions and hit 100% on a single trial for every variant, so it has a ceiling effect. The hard tier adds nine cases, which is still a small set: treat pass rates as directional, and use `--trials` to separate real differences from noise.
 - The oracle run measures tool sufficiency, not model ability.
-- All variants share one system prompt, which already tells the agent to check the schema and to answer `UNANSWERABLE` when the data can't answer. That helps the weaker variants and may understate the gap between them.
+- Unless `--prompt minimal` is used, all variants share a system prompt that tells the agent to check the schema and not to guess. That helps the weaker variants and may understate the gap between them. Even `minimal` offers `UNANSWERABLE` as an output token, so abstention is not entirely unprompted.
 
 ## Roadmap
 
