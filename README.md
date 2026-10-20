@@ -83,16 +83,38 @@ The questions range from simple counts to multi-step reasoning, e.g. finding the
 
 ## Results
 
-Oracle run: **10/10** (tool layer verified). Agent results are not published yet: run `npm run eval:agent` and add the table here, along with the model and date. Plan for the first iteration loop:
+### Baseline (2026-10-20)
 
-1. Run the baseline with several trials (`--trials 3` or more) and record the pass rate and average tool calls per question.
-2. Read the failing traces in `results/`.
-3. Change tool descriptions or output shapes, re-run, and record what moved.
+`claude-haiku-5-5`, 1 trial per case, default settings. Raw data: [`results/agent-2026-10-20T13-57-29-987Z.json`](results/agent-2026-10-20T13-57-29-987Z.json).
+
+| Case | Pass | Tool calls | Input tokens | Output tokens |
+| --- | --- | --- | --- | --- |
+| total-signups | yes | 1 | 6,519 | 235 |
+| projects-first-half | yes | 2 | 11,134 | 607 |
+| signup-to-upgrade | yes | 2 | 10,901 | 189 |
+| top-signup-country | yes | 2 | 10,856 | 181 |
+| error-spike-day | yes | 1 | 6,304 | 163 |
+| error-spike-cause | yes | 3 | 12,885 | 304 |
+| payment-timeouts | yes | 2 | 10,763 | 184 |
+| busiest-signup-week | yes | 2 | 10,922 | 530 |
+| conversion-regression | yes | 3 | 12,924 | 556 |
+| unanswerable-revenue | yes | 1 | 6,533 | 223 |
+| **Total** | **10/10** | **avg 1.9** | **99,741** | **3,172** |
+
+No tool errors occurred, and the model correctly answered `UNANSWERABLE` for the revenue question.
+
+**What this does and doesn't show.** A perfect score on one trial means these ten questions are too easy to separate good tool design from bad: there is no failure to learn from yet. It shows the tools work end to end with a small model. It does not show that the design choices matter. That is the next experiment.
+
+### Next
+
+1. Add a deliberately minimal `naive` server variant (one-line descriptions, vague errors, no precomputed totals) and run the same questions against both, to measure what each design choice is worth.
+2. Add harder cases: chained calls, misspelled event names, out-of-range dates, ambiguous wording.
+3. Re-run with `--trials 3` or more, and record what moved in this section.
 
 ## Limitations
 
 - The data is synthetic. Realistic enough to test tool use, but not a claim about real-world product data.
-- Ten questions is a small eval set. Treat pass rates as directional until the set grows.
+- Ten questions is a small eval set, and the baseline hit 100% on a single trial, so it currently has a ceiling effect. Treat pass rates as directional until the set grows and gets harder.
 - The oracle run measures tool sufficiency, not model ability.
 
 ## Roadmap
