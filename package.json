@@ -9,7 +9,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test test/analytics.test.ts test/server.test.ts",
+    "test": "tsx --test test/analytics.test.ts test/server.test.ts test/variants.test.ts",
     "serve": "tsx src/index.ts",
     "eval:oracle": "tsx src/eval/run.ts --mode oracle",
     "eval:agent": "tsx src/eval/run.ts --mode agent"

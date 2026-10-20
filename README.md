@@ -47,6 +47,7 @@ Run the agent eval (needs your own key; set it in your shell and never commit it
 ```bash
 export ANTHROPIC_API_KEY=...        # PowerShell: $env:ANTHROPIC_API_KEY = "..."
 npm run eval:agent -- --trials 3
+npm run eval:agent -- --variant full,naive --trials 3      # ablation: same questions, different server designs
 npm run eval:agent -- --case conversion-regression --model <model-id> --max-turns 8
 ```
 
@@ -81,6 +82,28 @@ Each case has a question, an expected answer, and an oracle.
 
 The questions range from simple counts to multi-step reasoning, e.g. finding the day with the most errors and then the cause, or comparing funnel conversion between two periods by browser to find the regression.
 
+## Ablation: what is each design choice worth?
+
+The design principles above are claims. To test them, `src/variants.ts` defines server variants that switch three choices on or off independently:
+
+| Variant | Rich descriptions | Error hints | Precomputed fields |
+| --- | --- | --- | --- |
+| `full` (default) | yes | yes | yes |
+| `naive` | no | no | no |
+| `no-descriptions` | no | yes | yes |
+| `no-hints` | yes | no | yes |
+| `no-precompute` | yes | yes | no |
+
+- **Rich descriptions off:** one-line tool descriptions and no parameter descriptions. The tool names, parameter names and types are unchanged.
+- **Error hints off:** errors still name the problem (`Unknown event "signup"`) but drop the `Hint:` line with the fix.
+- **Precomputed off:** totals, peaks, shares and percentages are removed. Raw counts stay, so every answer is still derivable (tested in `test/variants.test.ts`). Rows stay sorted high to low, so rankings remain easy to read.
+
+```bash
+npm run eval:agent -- --variant all --trials 3
+```
+
+This writes one results file per variant and prints a comparison table (pass rate, tool calls, tokens per run, and a per-case matrix). Variants only apply to agent runs; the oracle needs the `full` server.
+
 ## Results
 
 ### Baseline (2026-10-20)
@@ -107,7 +130,7 @@ No tool errors occurred, and the model correctly answered `UNANSWERABLE` for the
 
 ### Next
 
-1. Add a deliberately minimal `naive` server variant (one-line descriptions, vague errors, no precomputed totals) and run the same questions against both, to measure what each design choice is worth.
+1. Run the ablation (`--variant all --trials 3`) and record the comparison table here.
 2. Add harder cases: chained calls, misspelled event names, out-of-range dates, ambiguous wording.
 3. Re-run with `--trials 3` or more, and record what moved in this section.
 
@@ -116,6 +139,7 @@ No tool errors occurred, and the model correctly answered `UNANSWERABLE` for the
 - The data is synthetic. Realistic enough to test tool use, but not a claim about real-world product data.
 - Ten questions is a small eval set, and the baseline hit 100% on a single trial, so it currently has a ceiling effect. Treat pass rates as directional until the set grows and gets harder.
 - The oracle run measures tool sufficiency, not model ability.
+- All variants share one system prompt, which already tells the agent to check the schema and to answer `UNANSWERABLE` when the data can't answer. That helps the weaker variants and may understate the gap between them.
 
 ## Roadmap
 
