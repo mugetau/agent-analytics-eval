@@ -1,0 +1,27 @@
+{
+  "name": "agent-analytics-eval",
+  "version": "0.1.0",
+  "description": "An agent-friendly product-analytics MCP server, plus an eval harness that measures how well LLM agents use it.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/analytics.test.ts test/server.test.ts",
+    "serve": "tsx src/index.ts",
+    "eval:oracle": "tsx src/eval/run.ts --mode oracle",
+    "eval:agent": "tsx src/eval/run.ts --mode agent"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

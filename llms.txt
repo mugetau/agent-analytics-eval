@@ -1,0 +1,21 @@
+# agent-analytics-eval
+
+> MCP server exposing a small product-analytics dataset (signups, onboarding, errors, upgrades) through four query tools. Dates are UTC, YYYY-MM-DD, inclusive.
+
+## How to use the tools
+
+1. Call `get_schema` first. It lists real event names and properties. Never guess them.
+2. Pick the tool by question type:
+   - "How many X?" / "when did X spike?" / "which week had the most X?" -> `trend`
+   - "What is the conversion from A to B?" / "where do users drop off?" -> `funnel`
+   - "Which value of property P is most common?" -> `breakdown`
+3. Totals, peaks and percentages are already computed in the response. Read them; do not recompute.
+4. To compare two periods, call the tool once per period with different from/to. To compare groups, use the `breakdown` parameter (on `funnel` it reads a property of the FIRST step's event).
+5. If a call returns `isError: true`, read the `Hint:` line. It names the valid events, properties or format.
+6. The dataset has no revenue, session-duration or device-model data. If the question needs data that is not in `get_schema`, say it cannot be answered. Do not estimate.
+
+## Conventions
+
+- Weeks start on Monday (UTC). The first and last week in a range can be partial.
+- `unique_users: true` counts distinct users instead of events.
+- Percentages are 0-100, rounded to 2 decimals.
