@@ -15,8 +15,8 @@ Building for agents is different from building for people. An agent can't skim a
 | Synthetic dataset | `src/events.ts` | ~10k seeded events (signups, onboarding, errors, ...) with **planted ground truth**: a payment-error spike and a Safari-only conversion regression |
 | Query layer | `src/analytics.ts` | Pure functions: `schema`, `trend`, `funnel`, `breakdown`. Every error carries a hint that tells the agent how to fix its next call |
 | MCP server | `src/server.ts`, `src/index.ts` | Four tools over stdio, with descriptions written for agents |
-| Evals | `src/eval/` | 10 graded questions, an **oracle** run (no LLM) and an **agent** run (Claude via the Anthropic API) |
-| Tests | `test/` | 30 tests, including "the tool surface can answer every eval question" |
+| Evals | `src/eval/` | 19 graded questions in two tiers, an **oracle** run (no LLM) and an **agent** run (Claude via the Anthropic API) |
+| Tests | `test/` | 45 tests, including "the tool surface can answer every eval question" |
 
 ## Quick start
 
@@ -25,7 +25,7 @@ Requires Node 20+.
 ```bash
 npm install
 npm test                 # unit tests + oracle check, no API key needed
-npm run eval:oracle      # scripted tool calls, proves the tools can answer all 10 questions
+npm run eval:oracle      # scripted tool calls, proves the tools can answer all 19 questions
 npm run serve            # start the MCP server on stdio
 ```
 
@@ -48,6 +48,7 @@ Run the agent eval (needs your own key; set it in your shell and never commit it
 export ANTHROPIC_API_KEY=...        # PowerShell: $env:ANTHROPIC_API_KEY = "..."
 npm run eval:agent -- --trials 3
 npm run eval:agent -- --variant full,naive --trials 3      # ablation: same questions, different server designs
+npm run eval:agent -- --tier hard --variant all --trials 3  # only the harder cases
 npm run eval:agent -- --case conversion-regression --model <model-id> --max-turns 8
 ```
 
@@ -81,6 +82,25 @@ Each case has a question, an expected answer, and an oracle.
 - **Agent run:** a Claude model gets the question and the MCP tools, and must end with `FINAL ANSWER: ...`. Only that line is graded (numbers with tolerance, exact text, or `UNANSWERABLE`).
 
 The questions range from simple counts to multi-step reasoning, e.g. finding the day with the most errors and then the cause, or comparing funnel conversion between two periods by browser to find the regression.
+
+### Tiers
+
+- **core** (10 cases): straightforward questions, from one-call counts to a two-period funnel comparison. These ceilinged quickly: see the first results below.
+- **hard** (9 cases, added after the core tier scored 100% on every variant): each is built to stress one design choice, listed in the `targets` field of `src/eval/cases.ts`.
+
+| Hard case | What it stresses |
+| --- | --- |
+| `avg-errors-per-day` | Total divided by number of days (precomputed totals) |
+| `payment-error-share` | A percentage of a total (precomputed shares) |
+| `quiet-error-days` | Scanning 28 daily values and counting; no tool does this for the agent |
+| `final-week-upgraders` | Using the schema's date range, then date arithmetic |
+| `safari-pricing-views` | Combining a filter on one property with a breakdown on another |
+| `fast-upgraders` | A less obvious parameter (`conversion_window_days`) |
+| `week-over-week-signups` | Weekly buckets and a percentage change, including a negative result |
+| `busiest-weekday` | Aggregating 28 daily values by weekday (the top two weekdays differ by only 2 signups) |
+| `unanswerable-session-duration` | Saying no when the dataset has no session data |
+
+Run one tier with `--tier core|hard|all` (default `all`).
 
 ## Ablation: what is each design choice worth?
 
@@ -128,16 +148,36 @@ No tool errors occurred, and the model correctly answered `UNANSWERABLE` for the
 
 **What this does and doesn't show.** A perfect score on one trial means these ten questions are too easy to separate good tool design from bad: there is no failure to learn from yet. It shows the tools work end to end with a small model. It does not show that the design choices matter. That is the next experiment.
 
+### Ablation on the core tier (2026-10-20)
+
+`claude-haiku-5-5`, 1 trial per case, 10 core cases, all five variants. Raw data: `results/agent-<variant>-2026-10-20T15-*.json`.
+
+| Variant | Pass | Avg tool calls | Avg input tokens / run | Avg output tokens / run |
+| --- | --- | --- | --- | --- |
+| full | 10/10 | 2.1 | 10,655 | 326 |
+| naive | 10/10 | 2.0 | 6,682 | 493 |
+| no-descriptions | 10/10 | 2.0 | 6,782 | 409 |
+| no-hints | 10/10 | 2.1 | 11,033 | 359 |
+| no-precompute | 10/10 | 2.1 | 10,797 | 430 |
+
+What this shows, and what it doesn't:
+
+- **Accuracy did not move.** Every variant passed every question, so on this tier none of the three design choices changed correctness. Differences in tool calls (for example 4 vs 3 on one case) are single-trial noise.
+- **Rich descriptions cost tokens.** The full descriptions add about 4,000 input tokens per run (roughly 60% more than `naive`), because tool definitions are re-sent on every turn. On these questions that was cost with no measurable benefit.
+- **Error hints and precomputed fields were barely exercised.** There were no tool errors in four of the five variants (one in `no-precompute`, which had hints on), and the arithmetic was trivial. That is why the hard tier exists.
+- **The shared system prompt helps every variant.** All agents called `get_schema` first, which gives even `naive` the real event names.
+
+Hard-tier results: not run yet.
+
 ### Next
 
-1. Run the ablation (`--variant all --trials 3`) and record the comparison table here.
-2. Add harder cases: chained calls, misspelled event names, out-of-range dates, ambiguous wording.
-3. Re-run with `--trials 3` or more, and record what moved in this section.
+1. Run the hard tier on all variants (`--tier hard --variant all --trials 3`) and record the comparison table here.
+2. Read any failing or flaky traces, make one change at a time, and record what moved.
 
 ## Limitations
 
 - The data is synthetic. Realistic enough to test tool use, but not a claim about real-world product data.
-- Ten questions is a small eval set, and the baseline hit 100% on a single trial, so it currently has a ceiling effect. Treat pass rates as directional until the set grows and gets harder.
+- The core tier has only ten questions and hit 100% on a single trial for every variant, so it has a ceiling effect. The hard tier adds nine cases, which is still a small set: treat pass rates as directional, and use `--trials` to separate real differences from noise.
 - The oracle run measures tool sufficiency, not model ability.
 - All variants share one system prompt, which already tells the agent to check the schema and to answer `UNANSWERABLE` when the data can't answer. That helps the weaker variants and may understate the gap between them.
 

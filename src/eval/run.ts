@@ -6,6 +6,7 @@
  *   npm run eval:agent -- --trials 3                  repeat each question 3 times (LLM answers vary between runs)
  *   npm run eval:agent -- --variant full,naive        run the same questions against several server variants and compare
  *   npm run eval:agent -- --variant all --trials 3    every variant (see src/variants.ts)
+ *   npm run eval:agent -- --tier hard                 only the harder cases (core | hard | all, default all)
  *   npm run eval:agent -- --case error-spike-day --model <model-id> --max-turns 8
  *
  * Agent mode needs ANTHROPIC_API_KEY. Results are written to results/<mode>-<variant>-<timestamp>.json.
@@ -168,12 +169,12 @@ interface VariantReport {
 async function runVariant(
   variant: Variant,
   mode: "oracle" | "agent",
-  opts: { model: string; maxTurns: number; trials: number; only?: string },
+  opts: { model: string; maxTurns: number; trials: number; only?: string; tier: string },
 ): Promise<VariantReport> {
   const events = generateEvents();
   const client = await connectInMemory(events, variant);
-  const cases = buildCases(events).filter((c) => !opts.only || c.id === opts.only);
-  if (cases.length === 0) throw new Error(`No case matches "${opts.only}"`);
+  const cases = buildCases(events).filter((c) => (!opts.only || c.id === opts.only) && (opts.tier === "all" || (c.tier ?? "core") === opts.tier));
+  if (cases.length === 0) throw new Error(`No case matches (case=${opts.only ?? "any"}, tier=${opts.tier})`);
 
   console.log(`\n=== variant: ${variant.name} ===`);
   const summaries: CaseSummary[] = [];
@@ -276,6 +277,7 @@ async function main() {
       "max-turns": { type: "string", default: "10" },
       trials: { type: "string", default: "1" },
       variant: { type: "string", default: "full" },
+      tier: { type: "string", default: "all" },
     },
   });
   const mode = values.mode;
@@ -286,6 +288,8 @@ async function main() {
   // The oracle is deterministic, so repeating it would add nothing.
   const trials = mode === "agent" ? Number(values.trials) : 1;
   if (!Number.isInteger(trials) || trials < 1 || trials > 20) throw new Error("--trials must be an integer from 1 to 20");
+
+  if (!(["core", "hard", "all"] as string[]).includes(values.tier!)) throw new Error('--tier must be "core", "hard" or "all"');
 
   const requested = values.variant === "all" ? Object.keys(VARIANTS) : values.variant!.split(",").map((v) => v.trim());
   const variants = requested.map((name) => {
@@ -299,7 +303,7 @@ async function main() {
 
   const reports: VariantReport[] = [];
   for (const v of variants) {
-    reports.push(await runVariant(v, mode, { model: values.model!, maxTurns: Number(values["max-turns"]), trials, only: values.case }));
+    reports.push(await runVariant(v, mode, { model: values.model!, maxTurns: Number(values["max-turns"]), trials, only: values.case, tier: values.tier! }));
   }
   if (reports.length > 1) printComparison(reports);
 
