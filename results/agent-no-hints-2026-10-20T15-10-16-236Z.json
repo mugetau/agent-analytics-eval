@@ -1,0 +1,513 @@
+{
+  "mode": "agent",
+  "variant": "no-hints",
+  "variant_settings": {
+    "richDescriptions": true,
+    "errorHints": false,
+    "precomputed": true
+  },
+  "model": "claude-haiku-5-5",
+  "trials": 1,
+  "run_at": "2026-10-20T15:10:16.236Z",
+  "passed_runs": 10,
+  "total_runs": 10,
+  "cases": [
+    {
+      "id": "total-signups",
+      "question": "How many users signed up in total?",
+      "expected": {
+        "kind": "number",
+        "value": 1500,
+        "tolerance": 0
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 1,
+      "avg_input_tokens": 6519,
+      "avg_output_tokens": 245,
+      "runs": [
+        {
+          "id": "total-signups",
+          "question": "How many users signed up in total?",
+          "expected": {
+            "kind": "number",
+            "value": 1500,
+            "tolerance": 0
+          },
+          "pass": true,
+          "got": "1500",
+          "reason": "ok",
+          "tool_calls": 1,
+          "tool_errors": 0,
+          "input_tokens": 6519,
+          "output_tokens": 245,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "projects-first-half",
+      "question": "How many distinct users created a project between 2026-09-01 and 2026-09-14 (inclusive)?",
+      "expected": {
+        "kind": "number",
+        "value": 450,
+        "tolerance": 0
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 3,
+      "avg_input_tokens": 16559,
+      "avg_output_tokens": 979,
+      "runs": [
+        {
+          "id": "projects-first-half",
+          "question": "How many distinct users created a project between 2026-09-01 and 2026-09-14 (inclusive)?",
+          "expected": {
+            "kind": "number",
+            "value": 450,
+            "tolerance": 0
+          },
+          "pass": true,
+          "got": "450",
+          "reason": "ok",
+          "tool_calls": 3,
+          "tool_errors": 0,
+          "input_tokens": 16559,
+          "output_tokens": 979,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "trend",
+              "args": {
+                "event": "project_created",
+                "from": "2026-09-01",
+                "to": "2026-09-14",
+                "unique_users": true
+              },
+              "is_error": false
+            },
+            {
+              "name": "funnel",
+              "args": {
+                "steps": [
+                  "project_created",
+                  "onboarding_completed"
+                ],
+                "from": "2026-09-01",
+                "to": "2026-09-14"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "signup-to-upgrade",
+      "question": "What percentage of users who signed up went on to upgrade? Give the percentage rounded to 2 decimals, without the % sign.",
+      "expected": {
+        "kind": "number",
+        "value": 7.33,
+        "tolerance": 0.05
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 10958,
+      "avg_output_tokens": 228,
+      "runs": [
+        {
+          "id": "signup-to-upgrade",
+          "question": "What percentage of users who signed up went on to upgrade? Give the percentage rounded to 2 decimals, without the % sign.",
+          "expected": {
+            "kind": "number",
+            "value": 7.33,
+            "tolerance": 0.05
+          },
+          "pass": true,
+          "got": "7.33",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 10958,
+          "output_tokens": 228,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "funnel",
+              "args": {
+                "steps": [
+                  "signed_up",
+                  "upgraded"
+                ]
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "top-signup-country",
+      "question": "Which country had the most signups? Answer with the two-letter country code.",
+      "expected": {
+        "kind": "text",
+        "value": "US"
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 10856,
+      "avg_output_tokens": 181,
+      "runs": [
+        {
+          "id": "top-signup-country",
+          "question": "Which country had the most signups? Answer with the two-letter country code.",
+          "expected": {
+            "kind": "text",
+            "value": "US"
+          },
+          "pass": true,
+          "got": "US",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 10856,
+          "output_tokens": 181,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "breakdown",
+              "args": {
+                "event": "signed_up",
+                "property": "country",
+                "top": 10
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "error-spike-day",
+      "question": "On which date were there the most error_occurred events? Answer as YYYY-MM-DD.",
+      "expected": {
+        "kind": "text",
+        "value": "2026-09-20"
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 7598,
+      "avg_output_tokens": 180,
+      "runs": [
+        {
+          "id": "error-spike-day",
+          "question": "On which date were there the most error_occurred events? Answer as YYYY-MM-DD.",
+          "expected": {
+            "kind": "text",
+            "value": "2026-09-20"
+          },
+          "pass": true,
+          "got": "2026-09-20",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 7598,
+          "output_tokens": 180,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "trend",
+              "args": {
+                "event": "error_occurred",
+                "interval": "day"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "error-spike-cause",
+      "question": "On the day with the most error_occurred events, which error_type was the most common?",
+      "expected": {
+        "kind": "text",
+        "value": "PaymentTimeout"
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 3,
+      "avg_input_tokens": 16697,
+      "avg_output_tokens": 297,
+      "runs": [
+        {
+          "id": "error-spike-cause",
+          "question": "On the day with the most error_occurred events, which error_type was the most common?",
+          "expected": {
+            "kind": "text",
+            "value": "PaymentTimeout"
+          },
+          "pass": true,
+          "got": "PaymentTimeout",
+          "reason": "ok",
+          "tool_calls": 3,
+          "tool_errors": 0,
+          "input_tokens": 16697,
+          "output_tokens": 297,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "trend",
+              "args": {
+                "event": "error_occurred",
+                "interval": "day"
+              },
+              "is_error": false
+            },
+            {
+              "name": "breakdown",
+              "args": {
+                "event": "error_occurred",
+                "property": "error_type",
+                "from": "2026-09-20",
+                "to": "2026-09-20"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "payment-timeouts",
+      "question": "How many error_occurred events had the error_type PaymentTimeout in total?",
+      "expected": {
+        "kind": "number",
+        "value": 120,
+        "tolerance": 0
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 10763,
+      "avg_output_tokens": 254,
+      "runs": [
+        {
+          "id": "payment-timeouts",
+          "question": "How many error_occurred events had the error_type PaymentTimeout in total?",
+          "expected": {
+            "kind": "number",
+            "value": 120,
+            "tolerance": 0
+          },
+          "pass": true,
+          "got": "120",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 10763,
+          "output_tokens": 254,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "breakdown",
+              "args": {
+                "event": "error_occurred",
+                "property": "error_type"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "busiest-signup-week",
+      "question": "Group signups into weeks that start on Monday. Which week had the most signups? Answer with that week's Monday date as YYYY-MM-DD.",
+      "expected": {
+        "kind": "text",
+        "value": "2026-09-14"
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 10922,
+      "avg_output_tokens": 486,
+      "runs": [
+        {
+          "id": "busiest-signup-week",
+          "question": "Group signups into weeks that start on Monday. Which week had the most signups? Answer with that week's Monday date as YYYY-MM-DD.",
+          "expected": {
+            "kind": "text",
+            "value": "2026-09-14"
+          },
+          "pass": true,
+          "got": "2026-09-14",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 10922,
+          "output_tokens": 486,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "trend",
+              "args": {
+                "event": "signed_up",
+                "interval": "week",
+                "from": "2026-09-01",
+                "to": "2026-09-28"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "conversion-regression",
+      "question": "Compare the conversion from onboarding_completed to project_created between users who completed onboarding 2026-09-01 to 2026-09-14 and users who completed it 2026-09-15 to 2026-09-28. Which browser's conversion dropped the most between the two periods? Answer with the browser name.",
+      "expected": {
+        "kind": "text",
+        "value": "Safari"
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 3,
+      "avg_input_tokens": 12924,
+      "avg_output_tokens": 542,
+      "runs": [
+        {
+          "id": "conversion-regression",
+          "question": "Compare the conversion from onboarding_completed to project_created between users who completed onboarding 2026-09-01 to 2026-09-14 and users who completed it 2026-09-15 to 2026-09-28. Which browser's conversion dropped the most between the two periods? Answer with the browser name.",
+          "expected": {
+            "kind": "text",
+            "value": "Safari"
+          },
+          "pass": true,
+          "got": "Safari",
+          "reason": "ok",
+          "tool_calls": 3,
+          "tool_errors": 0,
+          "input_tokens": 12924,
+          "output_tokens": 542,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "funnel",
+              "args": {
+                "steps": [
+                  "onboarding_completed",
+                  "project_created"
+                ],
+                "from": "2026-09-01",
+                "to": "2026-09-14",
+                "breakdown": "browser"
+              },
+              "is_error": false
+            },
+            {
+              "name": "funnel",
+              "args": {
+                "steps": [
+                  "onboarding_completed",
+                  "project_created"
+                ],
+                "from": "2026-09-15",
+                "to": "2026-09-28",
+                "breakdown": "browser"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "unanswerable-revenue",
+      "question": "What was our total revenue in September, in US dollars?",
+      "expected": {
+        "kind": "unanswerable"
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 1,
+      "avg_input_tokens": 6533,
+      "avg_output_tokens": 200,
+      "runs": [
+        {
+          "id": "unanswerable-revenue",
+          "question": "What was our total revenue in September, in US dollars?",
+          "expected": {
+            "kind": "unanswerable"
+          },
+          "pass": true,
+          "got": "UNANSWERABLE",
+          "reason": "ok",
+          "tool_calls": 1,
+          "tool_errors": 0,
+          "input_tokens": 6533,
+          "output_tokens": 200,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
