@@ -41,6 +41,20 @@ export const VARIANTS: Record<string, Variant> = {
   "no-precompute": { name: "no-precompute", descriptions: "full", errorHints: true, precomputed: false },
 };
 
+/**
+ * The variant the shipped server (`npm run serve`) uses, chosen from the description diet results.
+ * The evals still default to `full`, so every earlier result stays comparable.
+ * Override with the ANALYTICS_VARIANT environment variable, e.g. ANALYTICS_VARIANT=full.
+ */
+export const DEFAULT_SERVER_VARIANT = "short";
+
+export function resolveVariant(name: string | undefined): Variant {
+  const key = name && name.trim() ? name.trim() : DEFAULT_SERVER_VARIANT;
+  const variant = VARIANTS[key];
+  if (!variant) throw new Error(`Unknown ANALYTICS_VARIANT "${key}". Choose from: ${Object.keys(VARIANTS).join(", ")}.`);
+  return variant;
+}
+
 type Json = Record<string, any>;
 
 /** Removes every derived field from a tool result, keeping the raw counts the answer can be built from. */

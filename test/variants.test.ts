@@ -4,7 +4,7 @@ import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { call } from "../src/eval/cases.js";
 import { connectInMemory } from "../src/eval/connect.js";
 import { generateEvents } from "../src/events.js";
-import { VARIANTS, stripPrecomputed } from "../src/variants.js";
+import { DEFAULT_SERVER_VARIANT, VARIANTS, resolveVariant, stripPrecomputed } from "../src/variants.js";
 
 const events = generateEvents();
 const clients: Record<string, Client> = {};
@@ -95,5 +95,18 @@ describe("variants change only what they claim to change", () => {
   it("get_schema is unaffected by stripping", () => {
     const payload = { events: [{ name: "x", count: 1 }], total_events: 1 };
     assert.deepEqual(stripPrecomputed("get_schema", payload), payload);
+  });
+});
+
+describe("shipped server variant", () => {
+  it("defaults to short and can be overridden", () => {
+    assert.equal(DEFAULT_SERVER_VARIANT, "short");
+    assert.equal(resolveVariant(undefined).name, "short");
+    assert.equal(resolveVariant("").name, "short");
+    assert.equal(resolveVariant("full").name, "full");
+  });
+
+  it("rejects an unknown variant with the valid choices", () => {
+    assert.throws(() => resolveVariant("bogus"), /Unknown ANALYTICS_VARIANT "bogus".*full.*short/);
   });
 });

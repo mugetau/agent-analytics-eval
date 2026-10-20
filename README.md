@@ -16,7 +16,7 @@ Building for agents is different from building for people. An agent can't skim a
 | Query layer | `src/analytics.ts` | Pure functions: `schema`, `trend`, `funnel`, `breakdown`. Every error carries a hint that tells the agent how to fix its next call |
 | MCP server | `src/server.ts`, `src/index.ts` | Four tools over stdio, with descriptions written for agents |
 | Evals | `src/eval/` | 19 graded questions in two tiers, an **oracle** run (no LLM) and an **agent** run (Claude via the Anthropic API) |
-| Tests | `test/` | 54 tests, including "the tool surface can answer every eval question" |
+| Tests | `test/` | 56 tests, including "the tool surface can answer every eval question" |
 
 ## Quick start
 
@@ -28,6 +28,8 @@ npm test                 # unit tests + oracle check, no API key needed
 npm run eval:oracle      # scripted tool calls, proves the tools can answer all 19 questions
 npm run serve            # start the MCP server on stdio
 ```
+
+The server uses the `short` tool documentation by default (chosen from the description diet below). Set `ANALYTICS_VARIANT=full` for the original, longer descriptions. The evals default to `full`, so earlier results stay comparable.
 
 Use it from an MCP client (Claude Desktop, Claude Code, ...):
 
@@ -221,17 +223,46 @@ What this shows:
 **Conclusion so far.** On this tool surface (four tools, 28 days of data) and with this system prompt, a small modern model (`claude-haiku-5-5`) is insensitive to how the tools are documented. The documentation costs tokens without changing answers. This does **not** show that tool design never matters: the result is specific to a small tool surface, a small dataset, one model and a prompt that already tells the agent how to work. The next experiment removes that last confound.
 
 
+### Hard tier with the minimal prompt (2026-10-20)
+
+The previous run used a prompt that tells the agent to check the schema and not to guess. This run removes that guidance (`--prompt minimal`) and compares the two extremes, `full` and `naive`, with 3 trials per case. Raw data: `results/agent-full-minimal-*` and `results/agent-naive-minimal-*` (the 16-02 and 16-04 runs).
+
+| Variant | Pass | Avg tool calls | Avg input tokens / run | Avg output tokens / run |
+| --- | --- | --- | --- | --- |
+| full | 27/27 | 1.9 | 10,383 | 439 |
+| naive | 27/27 | 1.9 | 6,371 | 552 |
+
+The null result survives the prompt change: no failures in 54 runs. `naive` used about 39% fewer input tokens. With 27 passes and no failures per variant, the data only supports saying each failure rate is probably under about 10%.
+
+### Description diet (2026-10-20)
+
+Hints and precomputed fields stay on; only the documentation shrinks. `--tier hard --prompt minimal --trials 3`, 108 runs. Raw data: `results/agent-<level>-minimal-2026-10-20T16-1*` and `T16-2*`.
+
+| Level | Pass | Avg tool calls | Input tokens / run | vs full | Output tokens / run |
+| --- | --- | --- | --- | --- | --- |
+| full | 27/27 | 1.9 | 10,276 | | 425 |
+| lean | 27/27 | 1.9 | 8,175 | -20% | 444 |
+| short | 27/27 | 1.9 | 7,221 | -30% | 491 |
+| none (`no-descriptions`) | 27/27 | 1.9 | 6,385 | -38% | 487 |
+
+**Decision: the shipped server uses `short`.** Every level kept every answer correct, so accuracy cannot choose between them; `none` is the cheapest. I chose `short` as a judgment call, not a measured result: it saves 30%, still states the date format, and keeps a little protection for cases these tests don't cover. The extra cost over `none` is about 800 input tokens per run.
+
+What this does not show:
+
+- That documentation is useless. Tool and parameter names here are self-explanatory, and every agent called `get_schema` first on its own. A larger or more ambiguous tool surface, or a weaker model, could behave differently.
+- Real dollar savings. These are raw input tokens; with prompt caching, repeated tool definitions are much cheaper, so the saving in cost is smaller than the token percentage. Smaller definitions still save context window and latency.
+
 ### Next
 
-1. Run the hard tier with `--prompt minimal` on `full` vs `naive` with `--trials 3` (the option now exists; see Prompts above) and record the table here.
-2. If the variants still tie: test a larger tool surface (many more tools, where descriptions decide tool choice), or optimise for cost by shrinking the descriptions while the pass rate stays at 100%.
-3. Record what moved in this section, including results that show nothing.
+1. Test a larger tool surface: add realistic tools (retention, cohorts, user lookup) in their own tier of cases, re-baseline, and compare documentation levels again. This is the one setup left where descriptions could plausibly decide tool choice.
+2. If accuracy splits there, find the smallest documentation level that holds it, and record what moved here, including results that show nothing.
 
 ## Limitations
 
 - The data is synthetic. Realistic enough to test tool use, but not a claim about real-world product data.
 - The core tier has only ten questions and hit 100% on a single trial for every variant, so it has a ceiling effect. The hard tier adds nine cases, which is still a small set: treat pass rates as directional, and use `--trials` to separate real differences from noise.
 - The oracle run measures tool sufficiency, not model ability.
+- Everything was measured with one small model (`claude-haiku-5-5`) on a four-tool server and 28 days of synthetic data. The conclusions about documentation may not hold for other models or for much larger tool surfaces.
 - Unless `--prompt minimal` is used, all variants share a system prompt that tells the agent to check the schema and not to guess. That helps the weaker variants and may understate the gap between them. Even `minimal` offers `UNANSWERABLE` as an output token, so abstention is not entirely unprompted.
 
 ## Roadmap
