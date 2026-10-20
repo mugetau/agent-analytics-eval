@@ -1,0 +1,50 @@
+{
+  "mode": "agent",
+  "model": "claude-haiku-5-5",
+  "trials": 1,
+  "run_at": "2026-10-20T13:52:08.986Z",
+  "passed_runs": 1,
+  "total_runs": 1,
+  "cases": [
+    {
+      "id": "total-signups",
+      "question": "How many users signed up in total?",
+      "expected": {
+        "kind": "number",
+        "value": 1500,
+        "tolerance": 0
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 1,
+      "avg_input_tokens": 6519,
+      "avg_output_tokens": 239,
+      "runs": [
+        {
+          "id": "total-signups",
+          "question": "How many users signed up in total?",
+          "expected": {
+            "kind": "number",
+            "value": 1500,
+            "tolerance": 0
+          },
+          "pass": true,
+          "got": "1500",
+          "reason": "ok",
+          "tool_calls": 1,
+          "tool_errors": 0,
+          "input_tokens": 6519,
+          "output_tokens": 239,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
