@@ -167,12 +167,33 @@ What this shows, and what it doesn't:
 - **Error hints and precomputed fields were barely exercised.** There were no tool errors in four of the five variants (one in `no-precompute`, which had hints on), and the arithmetic was trivial. That is why the hard tier exists.
 - **The shared system prompt helps every variant.** All agents called `get_schema` first, which gives even `naive` the real event names.
 
-Hard-tier results: not run yet.
+### Ablation on the hard tier (2026-10-20)
+
+Same setup, 9 hard cases, all five variants, 1 trial each. Raw data: `results/agent-<variant>-2026-10-20T15-2*.json`.
+
+| Variant | Pass | Avg tool calls | Avg input tokens / run | Avg output tokens / run |
+| --- | --- | --- | --- | --- |
+| full | 9/9 | 1.9 | 10,683 | 443 |
+| naive | 9/9 | 1.9 | 6,696 | 509 |
+| no-descriptions | 9/9 | 2.0 | 6,796 | 535 |
+| no-hints | 9/9 | 1.9 | 10,669 | 428 |
+| no-precompute | 9/9 | 1.9 | 10,955 | 481 |
+
+What this shows:
+
+- **Still no accuracy difference.** All 45 runs passed, including the two cases with the least room for error: `quiet-error-days` (an exact count of 13) and `busiest-weekday` (a 2-signup margin). In `no-precompute` the agent received only 28 raw daily values and did the arithmetic itself, correctly.
+- **No tool errors in any variant,** so the error hints were never exercised on this tier either.
+- **Every agent called `get_schema` first,** in every variant. The shared system prompt says to.
+- **The cost finding repeats.** Rich descriptions again cost about 4,000 extra input tokens per run (10,683 vs 6,696 for `naive`), with no accuracy benefit. Output tokens are a little higher when information is removed (443 for `full` vs 481 to 535), consistent with the model doing more work itself, but the gap is small and from single trials.
+
+**Conclusion so far.** On this tool surface (four tools, 28 days of data) and with this system prompt, a small modern model (`claude-haiku-5-5`) is insensitive to how the tools are documented. The documentation costs tokens without changing answers. This does **not** show that tool design never matters: the result is specific to a small tool surface, a small dataset, one model and a prompt that already tells the agent how to work. The next experiment removes that last confound.
+
 
 ### Next
 
-1. Run the hard tier on all variants (`--tier hard --variant all --trials 3`) and record the comparison table here.
-2. Read any failing or flaky traces, make one change at a time, and record what moved.
+1. Add a `--prompt minimal` option (no "check the schema first" and no "say UNANSWERABLE" guidance), since a server author doesn't control the client's system prompt. Re-run the hard tier on `full` vs `naive` with `--trials 3`.
+2. If the variants still tie: test a larger tool surface (many more tools, where descriptions decide tool choice), or optimise for cost by shrinking the descriptions while the pass rate stays at 100%.
+3. Record what moved in this section, including results that show nothing.
 
 ## Limitations
 
