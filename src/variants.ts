@@ -4,8 +4,11 @@
  * Each variant switches three independent design choices on or off, so the evals can show
  * which choice actually matters instead of arguing about it:
  *
- *   richDescriptions  Tool and parameter descriptions that say when to use the tool, with examples.
- *                     Off: one-line tool descriptions and no parameter descriptions.
+ *   descriptions      How much documentation the tools carry, from most to least:
+ *                       full   when to use / not to use, examples, parameter docs (the original design)
+ *                       lean   the same facts without examples and with shorter parameter docs
+ *                       short  one sentence per tool, plus the date format
+ *                       none   a few words per tool and no parameter docs
  *   errorHints        Errors end with a `Hint:` line that tells the agent how to fix its next call.
  *                     Off: only the plain error message (which still names the problem).
  *   precomputed       Outputs include totals, peaks, shares and rounded percentages.
@@ -15,21 +18,27 @@
  * The oracle (scripted) run only works with `full`, because its scripted calls read the
  * precomputed fields. Variants are for agent runs.
  */
+export type DescriptionLevel = "full" | "lean" | "short" | "none";
+
 export interface Variant {
   name: string;
-  richDescriptions: boolean;
+  descriptions: DescriptionLevel;
   errorHints: boolean;
   precomputed: boolean;
 }
 
-export const FULL: Variant = { name: "full", richDescriptions: true, errorHints: true, precomputed: true };
+export const FULL: Variant = { name: "full", descriptions: "full", errorHints: true, precomputed: true };
 
 export const VARIANTS: Record<string, Variant> = {
   full: FULL,
-  naive: { name: "naive", richDescriptions: false, errorHints: false, precomputed: false },
-  "no-descriptions": { name: "no-descriptions", richDescriptions: false, errorHints: true, precomputed: true },
-  "no-hints": { name: "no-hints", richDescriptions: true, errorHints: false, precomputed: true },
-  "no-precompute": { name: "no-precompute", richDescriptions: true, errorHints: true, precomputed: false },
+  // Description diet: same hints and precomputed fields, less documentation.
+  lean: { name: "lean", descriptions: "lean", errorHints: true, precomputed: true },
+  short: { name: "short", descriptions: "short", errorHints: true, precomputed: true },
+  // Ablations.
+  naive: { name: "naive", descriptions: "none", errorHints: false, precomputed: false },
+  "no-descriptions": { name: "no-descriptions", descriptions: "none", errorHints: true, precomputed: true },
+  "no-hints": { name: "no-hints", descriptions: "full", errorHints: false, precomputed: true },
+  "no-precompute": { name: "no-precompute", descriptions: "full", errorHints: true, precomputed: false },
 };
 
 type Json = Record<string, any>;

@@ -16,7 +16,7 @@ Building for agents is different from building for people. An agent can't skim a
 | Query layer | `src/analytics.ts` | Pure functions: `schema`, `trend`, `funnel`, `breakdown`. Every error carries a hint that tells the agent how to fix its next call |
 | MCP server | `src/server.ts`, `src/index.ts` | Four tools over stdio, with descriptions written for agents |
 | Evals | `src/eval/` | 19 graded questions in two tiers, an **oracle** run (no LLM) and an **agent** run (Claude via the Anthropic API) |
-| Tests | `test/` | 48 tests, including "the tool surface can answer every eval question" |
+| Tests | `test/` | 54 tests, including "the tool surface can answer every eval question" |
 
 ## Quick start
 
@@ -105,17 +105,19 @@ Run one tier with `--tier core|hard|all` (default `all`).
 
 ## Ablation: what is each design choice worth?
 
-The design principles above are claims. To test them, `src/variants.ts` defines server variants that switch three choices on or off independently:
+The design principles above are claims. To test them, `src/variants.ts` defines server variants that switch three choices independently:
 
-| Variant | Rich descriptions | Error hints | Precomputed fields |
+| Variant | Descriptions | Error hints | Precomputed fields |
 | --- | --- | --- | --- |
-| `full` (default) | yes | yes | yes |
-| `naive` | no | no | no |
-| `no-descriptions` | no | yes | yes |
-| `no-hints` | yes | no | yes |
-| `no-precompute` | yes | yes | no |
+| `full` (default) | full | yes | yes |
+| `lean` | lean | yes | yes |
+| `short` | short | yes | yes |
+| `naive` | none | no | no |
+| `no-descriptions` | none | yes | yes |
+| `no-hints` | full | no | yes |
+| `no-precompute` | full | yes | no |
 
-- **Rich descriptions off:** one-line tool descriptions and no parameter descriptions. The tool names, parameter names and types are unchanged.
+- **Descriptions** come in four levels. `full`: when to use and not to use each tool, examples, parameter docs (the original design). `lean`: the same facts without examples and with shorter parameter docs. `short`: one sentence per tool plus the date format. `none`: a few words per tool and no parameter docs. Tool names, parameters and types never change between levels; a test checks that only the documentation differs.
 - **Error hints off:** errors still name the problem (`Unknown event "signup"`) but drop the `Hint:` line with the fix.
 - **Precomputed off:** totals, peaks, shares and percentages are removed. Raw counts stay, so every answer is still derivable (tested in `test/variants.test.ts`). Rows stay sorted high to low, so rankings remain easy to read.
 
@@ -135,6 +137,24 @@ A server author doesn't control the client's system prompt, so how much guidance
 | `minimal` | Answer-format rules only |
 
 Both keep the format rules, because the grader reads a `FINAL ANSWER:` line, and both let the agent write `UNANSWERABLE`, so an abstention can be read. `minimal` does not tell the agent to check the schema or to look for missing data. A test pins `guided` to the exact text used for all earlier results, so old and new runs stay comparable. Result files for `minimal` runs have `-minimal` in their name and record the prompt in the JSON.
+
+### The descriptions diet
+
+Tool definitions are re-sent to the model on every turn, so their size is a cost multiplied by the number of turns. `npm run tools:size` measures it offline and for free:
+
+| Level | Characters | vs full |
+| --- | --- | --- |
+| full | 5,783 | |
+| lean | 4,031 | -30% |
+| short | 2,368 | -59% |
+| none | 1,968 | -66% |
+
+Characters are exact; token counts are only roughly a third of that. The agent runs report the real input tokens. The diet experiment runs `full`, `lean`, `short` and `no-descriptions` on the hard tier with `--prompt minimal --trials 3`, and looks for the smallest level that keeps the pass rate. Results go in the Results section below.
+
+```bash
+npm run tools:size
+npm run eval:agent -- --tier hard --variant full,lean,short,no-descriptions --prompt minimal --trials 3 --model claude-haiku-5-5
+```
 
 ## Results
 

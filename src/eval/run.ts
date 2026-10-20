@@ -219,7 +219,7 @@ async function runVariant(
         mode,
         variant: variant.name,
         prompt: mode === "agent" ? opts.prompt : null,
-        variant_settings: { richDescriptions: variant.richDescriptions, errorHints: variant.errorHints, precomputed: variant.precomputed },
+        variant_settings: { descriptions: variant.descriptions, errorHints: variant.errorHints, precomputed: variant.precomputed },
         model: mode === "agent" ? opts.model : null,
         trials: opts.trials,
         run_at: new Date().toISOString(),
