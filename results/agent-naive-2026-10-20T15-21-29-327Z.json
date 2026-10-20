@@ -1,0 +1,455 @@
+{
+  "mode": "agent",
+  "variant": "naive",
+  "variant_settings": {
+    "richDescriptions": false,
+    "errorHints": false,
+    "precomputed": false
+  },
+  "model": "claude-haiku-5-5",
+  "trials": 1,
+  "run_at": "2026-10-20T15:21:29.327Z",
+  "passed_runs": 9,
+  "total_runs": 9,
+  "cases": [
+    {
+      "id": "avg-errors-per-day",
+      "question": "On average, how many error_occurred events happened per day across the whole dataset? Round to 1 decimal.",
+      "expected": {
+        "kind": "number",
+        "value": 8.9,
+        "tolerance": 0.06
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 7536,
+      "avg_output_tokens": 789,
+      "runs": [
+        {
+          "id": "avg-errors-per-day",
+          "question": "On average, how many error_occurred events happened per day across the whole dataset? Round to 1 decimal.",
+          "expected": {
+            "kind": "number",
+            "value": 8.9,
+            "tolerance": 0.06
+          },
+          "pass": true,
+          "got": "8.9",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 7536,
+          "output_tokens": 789,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "trend",
+              "args": {
+                "event": "error_occurred",
+                "from": "2026-09-01",
+                "to": "2026-09-28",
+                "interval": "day"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "payment-error-share",
+      "question": "What percentage of all error_occurred events had the error_type PaymentTimeout? Give the percentage rounded to 2 decimals, without the % sign.",
+      "expected": {
+        "kind": "number",
+        "value": 48.19,
+        "tolerance": 0.05
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 6729,
+      "avg_output_tokens": 324,
+      "runs": [
+        {
+          "id": "payment-error-share",
+          "question": "What percentage of all error_occurred events had the error_type PaymentTimeout? Give the percentage rounded to 2 decimals, without the % sign.",
+          "expected": {
+            "kind": "number",
+            "value": 48.19,
+            "tolerance": 0.05
+          },
+          "pass": true,
+          "got": "48.19",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 6729,
+          "output_tokens": 324,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "breakdown",
+              "args": {
+                "event": "error_occurred",
+                "property": "error_type"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quiet-error-days",
+      "question": "On how many days of the dataset were there fewer than 5 error_occurred events? Count every day from the first to the last day of the data.",
+      "expected": {
+        "kind": "number",
+        "value": 13,
+        "tolerance": 0
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 7494,
+      "avg_output_tokens": 712,
+      "runs": [
+        {
+          "id": "quiet-error-days",
+          "question": "On how many days of the dataset were there fewer than 5 error_occurred events? Count every day from the first to the last day of the data.",
+          "expected": {
+            "kind": "number",
+            "value": 13,
+            "tolerance": 0
+          },
+          "pass": true,
+          "got": "13",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 7494,
+          "output_tokens": 712,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "trend",
+              "args": {
+                "event": "error_occurred",
+                "from": "2026-09-01",
+                "to": "2026-09-28",
+                "interval": "day",
+                "unique_users": false
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "final-week-upgraders",
+      "question": "How many distinct users upgraded during the last 7 days of the dataset, counting the last day of the data as the 7th day?",
+      "expected": {
+        "kind": "number",
+        "value": 21,
+        "tolerance": 0
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 6871,
+      "avg_output_tokens": 518,
+      "runs": [
+        {
+          "id": "final-week-upgraders",
+          "question": "How many distinct users upgraded during the last 7 days of the dataset, counting the last day of the data as the 7th day?",
+          "expected": {
+            "kind": "number",
+            "value": 21,
+            "tolerance": 0
+          },
+          "pass": true,
+          "got": "21",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 6871,
+          "output_tokens": 518,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "trend",
+              "args": {
+                "event": "upgraded",
+                "from": "2026-09-22",
+                "to": "2026-09-28",
+                "interval": "day",
+                "unique_users": true
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "safari-pricing-views",
+      "question": "How many page_viewed events were for the path /pricing and came from Safari users?",
+      "expected": {
+        "kind": "number",
+        "value": 243,
+        "tolerance": 0
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 6720,
+      "avg_output_tokens": 321,
+      "runs": [
+        {
+          "id": "safari-pricing-views",
+          "question": "How many page_viewed events were for the path /pricing and came from Safari users?",
+          "expected": {
+            "kind": "number",
+            "value": 243,
+            "tolerance": 0
+          },
+          "pass": true,
+          "got": "243",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 6720,
+          "output_tokens": 321,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "breakdown",
+              "args": {
+                "event": "page_viewed",
+                "property": "browser",
+                "filter": {
+                  "property": "path",
+                  "equals": "/pricing"
+                }
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fast-upgraders",
+      "question": "What percentage of users who signed up upgraded within 3 days of signing up? Give the percentage rounded to 2 decimals, without the % sign.",
+      "expected": {
+        "kind": "number",
+        "value": 1.87,
+        "tolerance": 0.05
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 6866,
+      "avg_output_tokens": 358,
+      "runs": [
+        {
+          "id": "fast-upgraders",
+          "question": "What percentage of users who signed up upgraded within 3 days of signing up? Give the percentage rounded to 2 decimals, without the % sign.",
+          "expected": {
+            "kind": "number",
+            "value": 1.87,
+            "tolerance": 0.05
+          },
+          "pass": true,
+          "got": "1.87",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 6866,
+          "output_tokens": 358,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "funnel",
+              "args": {
+                "steps": [
+                  "signed_up",
+                  "upgraded"
+                ],
+                "conversion_window_days": 3,
+                "from": "2026-09-01",
+                "to": "2026-09-28"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "week-over-week-signups",
+      "question": "Weeks start on Monday. By what percentage did signups change in the week starting 2026-09-21 compared with the week starting 2026-09-14? Round to 1 decimal, without the % sign, and use a minus sign for a decrease.",
+      "expected": {
+        "kind": "number",
+        "value": -7.3,
+        "tolerance": 0.1
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 6800,
+      "avg_output_tokens": 341,
+      "runs": [
+        {
+          "id": "week-over-week-signups",
+          "question": "Weeks start on Monday. By what percentage did signups change in the week starting 2026-09-21 compared with the week starting 2026-09-14? Round to 1 decimal, without the % sign, and use a minus sign for a decrease.",
+          "expected": {
+            "kind": "number",
+            "value": -7.3,
+            "tolerance": 0.1
+          },
+          "pass": true,
+          "got": "-7.3",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 6800,
+          "output_tokens": 341,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "trend",
+              "args": {
+                "event": "signed_up",
+                "from": "2026-09-14",
+                "to": "2026-09-27",
+                "interval": "week"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "busiest-weekday",
+      "question": "Across the whole dataset, which day of the week had the most signups in total? Answer with the weekday name, for example Monday.",
+      "expected": {
+        "kind": "text",
+        "value": "Tuesday"
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 7443,
+      "avg_output_tokens": 1037,
+      "runs": [
+        {
+          "id": "busiest-weekday",
+          "question": "Across the whole dataset, which day of the week had the most signups in total? Answer with the weekday name, for example Monday.",
+          "expected": {
+            "kind": "text",
+            "value": "Tuesday"
+          },
+          "pass": true,
+          "got": "Tuesday",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 7443,
+          "output_tokens": 1037,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "trend",
+              "args": {
+                "event": "signed_up",
+                "interval": "day",
+                "from": "2026-09-01",
+                "to": "2026-09-28"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "unanswerable-session-duration",
+      "question": "What was the average session duration, in minutes?",
+      "expected": {
+        "kind": "unanswerable"
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 1,
+      "avg_input_tokens": 3802,
+      "avg_output_tokens": 183,
+      "runs": [
+        {
+          "id": "unanswerable-session-duration",
+          "question": "What was the average session duration, in minutes?",
+          "expected": {
+            "kind": "unanswerable"
+          },
+          "pass": true,
+          "got": "UNANSWERABLE",
+          "reason": "ok",
+          "tool_calls": 1,
+          "tool_errors": 0,
+          "input_tokens": 3802,
+          "output_tokens": 183,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
