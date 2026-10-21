@@ -1,0 +1,657 @@
+{
+  "mode": "agent",
+  "variant": "wide-lean",
+  "prompt": "minimal",
+  "variant_settings": {
+    "descriptions": "lean",
+    "errorHints": true,
+    "precomputed": true,
+    "surface": "wide"
+  },
+  "model": "claude-haiku-5-5",
+  "trials": 1,
+  "run_at": "2026-10-21T16:31:09.799Z",
+  "passed_runs": 14,
+  "total_runs": 14,
+  "cases": [
+    {
+      "id": "wide-peak-active-day",
+      "question": "On which date were the most distinct users active (doing any event)? Answer as YYYY-MM-DD.",
+      "expected": {
+        "kind": "text",
+        "value": "2026-09-20"
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 19546,
+      "avg_output_tokens": 226,
+      "runs": [
+        {
+          "id": "wide-peak-active-day",
+          "question": "On which date were the most distinct users active (doing any event)? Answer as YYYY-MM-DD.",
+          "expected": {
+            "kind": "text",
+            "value": "2026-09-20"
+          },
+          "pass": true,
+          "got": "2026-09-20",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 19546,
+          "output_tokens": 226,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "active_users",
+              "args": {
+                "from": "2026-09-01",
+                "to": "2026-09-28",
+                "interval": "day"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wide-day1-retention",
+      "question": "Of the users who first signed up between 2026-09-01 and 2026-09-27, what percentage viewed a page (page_viewed) on the calendar day right after their signup day (UTC)? Round to 2 decimals, without the % sign.",
+      "expected": {
+        "kind": "number",
+        "value": 84.04,
+        "tolerance": 0.05
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 19299,
+      "avg_output_tokens": 632,
+      "runs": [
+        {
+          "id": "wide-day1-retention",
+          "question": "Of the users who first signed up between 2026-09-01 and 2026-09-27, what percentage viewed a page (page_viewed) on the calendar day right after their signup day (UTC)? Round to 2 decimals, without the % sign.",
+          "expected": {
+            "kind": "number",
+            "value": 84.04,
+            "tolerance": 0.05
+          },
+          "pass": true,
+          "got": "84.04",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 19299,
+          "output_tokens": 632,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "retention",
+              "args": {
+                "cohort_event": "signed_up",
+                "return_event": "page_viewed",
+                "day_offset": 1,
+                "from": "2026-09-01",
+                "to": "2026-09-27"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wide-median-hours-to-project",
+      "question": "For users who created a project after signing up, what is the median number of hours from their first signup to their first project_created? Round to 2 decimals.",
+      "expected": {
+        "kind": "number",
+        "value": 13.81,
+        "tolerance": 0.02
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 12308,
+      "avg_output_tokens": 431,
+      "runs": [
+        {
+          "id": "wide-median-hours-to-project",
+          "question": "For users who created a project after signing up, what is the median number of hours from their first signup to their first project_created? Round to 2 decimals.",
+          "expected": {
+            "kind": "number",
+            "value": 13.81,
+            "tolerance": 0.02
+          },
+          "pass": true,
+          "got": "13.81",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 12308,
+          "output_tokens": 431,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "time_between",
+              "args": {
+                "from_event": "signed_up",
+                "to_event": "project_created",
+                "from": "1970-01-01",
+                "to": "2100-01-01"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wide-top-page-viewer",
+      "question": "Which user has the most page_viewed events? If several users tie, give the one whose id sorts first. Answer with the user id.",
+      "expected": {
+        "kind": "text",
+        "value": "user_0005"
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 18054,
+      "avg_output_tokens": 350,
+      "runs": [
+        {
+          "id": "wide-top-page-viewer",
+          "question": "Which user has the most page_viewed events? If several users tie, give the one whose id sorts first. Answer with the user id.",
+          "expected": {
+            "kind": "text",
+            "value": "user_0005"
+          },
+          "pass": true,
+          "got": "user_0005",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 18054,
+          "output_tokens": 350,
+          "trace": [
+            {
+              "name": "top_users",
+              "args": {
+                "event": "page_viewed",
+                "top": 5
+              },
+              "is_error": false
+            },
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wide-user-total-events",
+      "question": "How many events in total does user_0042 have?",
+      "expected": {
+        "kind": "number",
+        "value": 8,
+        "tolerance": 0
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 1,
+      "avg_input_tokens": 10886,
+      "avg_output_tokens": 135,
+      "runs": [
+        {
+          "id": "wide-user-total-events",
+          "question": "How many events in total does user_0042 have?",
+          "expected": {
+            "kind": "number",
+            "value": 8,
+            "tolerance": 0
+          },
+          "pass": true,
+          "got": "8",
+          "reason": "ok",
+          "tool_calls": 1,
+          "tool_errors": 0,
+          "input_tokens": 10886,
+          "output_tokens": 135,
+          "trace": [
+            {
+              "name": "user_profile",
+              "args": {
+                "distinct_id": "user_0042"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wide-views-per-user",
+      "question": "Among users who viewed at least one page, how many page_viewed events does each user have on average? Round to 2 decimals.",
+      "expected": {
+        "kind": "number",
+        "value": 3.48,
+        "tolerance": 0.02
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 1,
+      "avg_input_tokens": 10908,
+      "avg_output_tokens": 239,
+      "runs": [
+        {
+          "id": "wide-views-per-user",
+          "question": "Among users who viewed at least one page, how many page_viewed events does each user have on average? Round to 2 decimals.",
+          "expected": {
+            "kind": "number",
+            "value": 3.48,
+            "tolerance": 0.02
+          },
+          "pass": true,
+          "got": "3.48",
+          "reason": "ok",
+          "tool_calls": 1,
+          "tool_errors": 0,
+          "input_tokens": 10908,
+          "output_tokens": 239,
+          "trace": [
+            {
+              "name": "events_per_user",
+              "args": {
+                "event": "page_viewed"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wide-project-wow-change",
+      "question": "By what percentage did the number of project_created events change in 2026-09-15 to 2026-09-21 compared with 2026-09-08 to 2026-09-14? Round to 2 decimals, without the % sign, and use a minus sign for a decrease.",
+      "expected": {
+        "kind": "number",
+        "value": -14.72,
+        "tolerance": 0.05
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 1,
+      "avg_input_tokens": 11117,
+      "avg_output_tokens": 266,
+      "runs": [
+        {
+          "id": "wide-project-wow-change",
+          "question": "By what percentage did the number of project_created events change in 2026-09-15 to 2026-09-21 compared with 2026-09-08 to 2026-09-14? Round to 2 decimals, without the % sign, and use a minus sign for a decrease.",
+          "expected": {
+            "kind": "number",
+            "value": -14.72,
+            "tolerance": 0.05
+          },
+          "pass": true,
+          "got": "-14.72",
+          "reason": "ok",
+          "tool_calls": 1,
+          "tool_errors": 0,
+          "input_tokens": 11117,
+          "output_tokens": 266,
+          "trace": [
+            {
+              "name": "compare_periods",
+              "args": {
+                "event": "project_created",
+                "a_from": "2026-09-08",
+                "a_to": "2026-09-14",
+                "b_from": "2026-09-15",
+                "b_to": "2026-09-21"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wide-busy-signup-days",
+      "question": "Over the whole dataset, on how many days did signups exceed the daily mean by more than 1.5 standard deviations? Use the population standard deviation over all days from the first to the last day of the data.",
+      "expected": {
+        "kind": "number",
+        "value": 1,
+        "tolerance": 0
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 19679,
+      "avg_output_tokens": 1220,
+      "runs": [
+        {
+          "id": "wide-busy-signup-days",
+          "question": "Over the whole dataset, on how many days did signups exceed the daily mean by more than 1.5 standard deviations? Use the population standard deviation over all days from the first to the last day of the data.",
+          "expected": {
+            "kind": "number",
+            "value": 1,
+            "tolerance": 0
+          },
+          "pass": true,
+          "got": "1",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 19679,
+          "output_tokens": 1220,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "trend",
+              "args": {
+                "event": "signed_up",
+                "from": "2026-09-01",
+                "to": "2026-09-28"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wide-docs-viewers",
+      "question": "How many distinct users viewed the /docs page (page_viewed with path /docs)?",
+      "expected": {
+        "kind": "number",
+        "value": 748,
+        "tolerance": 0
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 18696,
+      "avg_output_tokens": 186,
+      "runs": [
+        {
+          "id": "wide-docs-viewers",
+          "question": "How many distinct users viewed the /docs page (page_viewed with path /docs)?",
+          "expected": {
+            "kind": "number",
+            "value": 748,
+            "tolerance": 0
+          },
+          "pass": true,
+          "got": "748",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 18696,
+          "output_tokens": 186,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "count_users",
+              "args": {
+                "event": "page_viewed",
+                "filter": {
+                  "property": "path",
+                  "equals": "/docs"
+                }
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wide-first-upgrade-date",
+      "question": "On what date did the first upgraded event happen? Answer as YYYY-MM-DD.",
+      "expected": {
+        "kind": "text",
+        "value": "2026-09-03"
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 1,
+      "avg_input_tokens": 10853,
+      "avg_output_tokens": 117,
+      "runs": [
+        {
+          "id": "wide-first-upgrade-date",
+          "question": "On what date did the first upgraded event happen? Answer as YYYY-MM-DD.",
+          "expected": {
+            "kind": "text",
+            "value": "2026-09-03"
+          },
+          "pass": true,
+          "got": "2026-09-03",
+          "reason": "ok",
+          "tool_calls": 1,
+          "tool_errors": 0,
+          "input_tokens": 10853,
+          "output_tokens": 117,
+          "trace": [
+            {
+              "name": "event_first_last",
+              "args": {
+                "event": "upgraded"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wide-signup-countries",
+      "question": "How many different countries appear on signed_up events?",
+      "expected": {
+        "kind": "number",
+        "value": 7,
+        "tolerance": 0
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 2,
+      "avg_input_tokens": 18831,
+      "avg_output_tokens": 263,
+      "runs": [
+        {
+          "id": "wide-signup-countries",
+          "question": "How many different countries appear on signed_up events?",
+          "expected": {
+            "kind": "number",
+            "value": 7,
+            "tolerance": 0
+          },
+          "pass": true,
+          "got": "7",
+          "reason": "ok",
+          "tool_calls": 2,
+          "tool_errors": 0,
+          "input_tokens": 18831,
+          "output_tokens": 263,
+          "trace": [
+            {
+              "name": "get_schema",
+              "args": {},
+              "is_error": false
+            },
+            {
+              "name": "get_property_values",
+              "args": {
+                "event": "signed_up",
+                "property": "country"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wide-errors-on-day",
+      "question": "How many error_occurred events happened on 2026-09-20?",
+      "expected": {
+        "kind": "number",
+        "value": 125,
+        "tolerance": 0
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 1,
+      "avg_input_tokens": 10822,
+      "avg_output_tokens": 138,
+      "runs": [
+        {
+          "id": "wide-errors-on-day",
+          "question": "How many error_occurred events happened on 2026-09-20?",
+          "expected": {
+            "kind": "number",
+            "value": 125,
+            "tolerance": 0
+          },
+          "pass": true,
+          "got": "125",
+          "reason": "ok",
+          "tool_calls": 1,
+          "tool_errors": 0,
+          "input_tokens": 10822,
+          "output_tokens": 138,
+          "trace": [
+            {
+              "name": "count_events",
+              "args": {
+                "event": "error_occurred",
+                "from": "2026-09-20",
+                "to": "2026-09-20"
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wide-user-second-event",
+      "question": "Looking at user_0017's events in time order, what is the name of their second event?",
+      "expected": {
+        "kind": "text",
+        "value": "onboarding_completed"
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 1,
+      "avg_input_tokens": 11224,
+      "avg_output_tokens": 161,
+      "runs": [
+        {
+          "id": "wide-user-second-event",
+          "question": "Looking at user_0017's events in time order, what is the name of their second event?",
+          "expected": {
+            "kind": "text",
+            "value": "onboarding_completed"
+          },
+          "pass": true,
+          "got": "onboarding_completed",
+          "reason": "ok",
+          "tool_calls": 1,
+          "tool_errors": 0,
+          "input_tokens": 11224,
+          "output_tokens": 161,
+          "trace": [
+            {
+              "name": "user_events",
+              "args": {
+                "distinct_id": "user_0017",
+                "limit": 5
+              },
+              "is_error": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wide-unanswerable-day30-retention",
+      "question": "What percentage of users who first signed up between 2026-09-01 and 2026-09-07 viewed a page (page_viewed) exactly 30 calendar days after their signup day?",
+      "expected": {
+        "kind": "unanswerable"
+      },
+      "trials": 1,
+      "passes": 1,
+      "pass_rate": 1,
+      "avg_tool_calls": 1,
+      "avg_input_tokens": 10986,
+      "avg_output_tokens": 461,
+      "runs": [
+        {
+          "id": "wide-unanswerable-day30-retention",
+          "question": "What percentage of users who first signed up between 2026-09-01 and 2026-09-07 viewed a page (page_viewed) exactly 30 calendar days after their signup day?",
+          "expected": {
+            "kind": "unanswerable"
+          },
+          "pass": true,
+          "got": "UNANSWERABLE",
+          "reason": "ok",
+          "tool_calls": 1,
+          "tool_errors": 1,
+          "input_tokens": 10986,
+          "output_tokens": 461,
+          "trace": [
+            {
+              "name": "retention",
+              "args": {
+                "cohort_event": "signed_up",
+                "return_event": "page_viewed",
+                "day_offset": 30,
+                "from": "2026-09-01",
+                "to": "2026-09-07"
+              },
+              "is_error": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
