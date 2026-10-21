@@ -274,18 +274,26 @@ No accuracy change. The 13 extra tools cost 2.3x the input tokens per run, becau
 | wide-short | 13/14 | 1.6 | 10,929 | -37% |
 | wide-none | 14/14 | 1.6 | 9,089 | -48% |
 
-The single failure was `wide-busy-signup-days` on `wide-short`: the agent never called `anomalies`. It fetched 28 daily signup counts with `trend` and did the standard-deviation arithmetic itself, getting 2 instead of 1. That is the failure mode the project is about (wrong tool choice leading to mental arithmetic). But it is one run, `wide-none` passed the same question, and `wide-full` needed 3 calls for it, so this is a hint, not a result.
+The single failure was `wide-busy-signup-days` on `wide-short`: the agent never called `anomalies`. It fetched 28 daily signup counts with `trend` and did the standard-deviation arithmetic itself, getting 2 instead of 1. That is the failure mode this project is about, but it was one run. I repeated the experiment with 3 trials:
 
-What this does and does not show:
+| Documentation | Pass | Avg calls | Avg input tokens/run | vs wide-full |
+| --- | --- | --- | --- | --- |
+| wide-full | 42/42 | 1.3 | 17,492 | |
+| wide-short | 42/42 | 1.6 | 11,027 | -37% |
+| wide-none | 42/42 | 1.6 | 9,033 | -48% |
 
-- Fewer descriptions cost nothing measurable in accuracy again, even with 17 overlapping tools. Descriptions are still the main lever on cost: `wide-none` used about half the input tokens of `wide-full`.
-- Haiku mostly picked the dedicated tool when one existed (for example `retention`, `top_users`, `count_users`), and in `wide-full` it needed fewer calls (1.4 vs 1.6). Better descriptions may buy efficiency rather than correctness.
-- One trial per case cannot separate a real 7-point gap from noise. Next: repeat with `--trials 3`.
+**The failure did not repeat: 126/126 runs passed across the three variants.** The single miss was noise, not a documentation effect, and the first table's 93% should not be read as one.
+
+What this shows and does not show:
+
+- With Haiku, 17 overlapping tools and almost no documentation, tool choice is not the bottleneck on these questions. Tool and parameter names carry most of the information.
+- Descriptions affect cost and, slightly, efficiency: `wide-full` needed 1.3 calls per run against 1.6 for `short` and `none`. The token saving from removing them (37-48%) is the only effect that reproduced.
+- The questions each map fairly directly to one tool. Cases where two tools plausibly fit (or where the right tool is not obvious from its name) are not covered, and that is where descriptions would be expected to matter.
 
 ### Next
 
-1. Repeat experiment B with `--trials 3` to see whether the `wide-short` failure on `anomalies` repeats.
-2. If accuracy splits between documentation levels, find the smallest level that holds it.
+1. Documentation experiments have run out of signal at this scale. The next test worth running is genuinely ambiguous questions, where two tools both look right and only the description says which one is.
+2. Alternatively, an eval of a `run_query` escape hatch against the narrow tools (see Roadmap).
 
 ## The wide tool surface (17 tools)
 
