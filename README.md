@@ -103,7 +103,9 @@ The questions range from simple counts to multi-step reasoning, e.g. finding the
 | `busiest-weekday` | Aggregating 28 daily values by weekday (the top two weekdays differ by only 2 signups) |
 | `unanswerable-session-duration` | Saying no when the dataset has no session data |
 
-Run one tier with `--tier core|hard|all` (default `all`).
+- **wide** (14 cases, needs the 17-tool `wide-*` variants): one or more questions per new tool, plus an unanswerable one. See [The wide tool surface](#the-wide-tool-surface-17-tools).
+
+Run one tier with `--tier core|hard|wide|all` (default `all`; core-surface variants skip the wide tier).
 
 ## Ablation: what is each design choice worth?
 
@@ -326,7 +328,7 @@ Run it (results are in the Results section above):
 # is the bigger surface itself harder? (same hard-tier questions, 4 tools vs 17)
 npm run eval:agent -- --tier hard --variant full,wide-full --prompt minimal --trials 3
 # do descriptions matter now? start with 1 trial to check cost
-npm run eval:agent -- --tier wide --variant wide-full,wide-lean,wide-short,wide-none --prompt minimal --trials 1
+npm run eval:agent -- --tier wide --variant wide-full,wide-lean,wide-short,wide-none --prompt minimal --trials 1   # I then repeated wide-full/short/none with --trials 3
 ```
 
 ## Limitations
@@ -334,12 +336,12 @@ npm run eval:agent -- --tier wide --variant wide-full,wide-lean,wide-short,wide-
 - The data is synthetic. Realistic enough to test tool use, but not a claim about real-world product data.
 - The core tier has only ten questions and hit 100% on a single trial for every variant, so it has a ceiling effect. The hard tier adds nine cases, which is still a small set: treat pass rates as directional, and use `--trials` to separate real differences from noise.
 - The oracle run measures tool sufficiency, not model ability.
-- Everything was measured with one small model (`claude-haiku-5-5`) on a four-tool server and 28 days of synthetic data. The conclusions about documentation may not hold for other models or for much larger tool surfaces.
+- Everything was measured with one small model (`claude-haiku-5-5`) on 4- and 17-tool servers and 28 days of synthetic data. The conclusions about documentation may not hold for other models, for much larger tool surfaces, or for questions where two tools plausibly fit.
 - Unless `--prompt minimal` is used, all variants share a system prompt that tells the agent to check the schema and not to guess. That helps the weaker variants and may understate the gap between them. Even `minimal` offers `UNANSWERABLE` as an output token, so abstention is not entirely unprompted.
 
 ## Roadmap
 
-- More cases: retention, multi-property filters, ambiguous questions that need clarification.
+- More cases: multi-property filters, and ambiguous questions where two tools both look right.
 - Run the same questions against a real analytics API as an adapter alongside the synthetic one.
 - Compare models and prompt variants; track cost (tokens) per correct answer.
 - A `run_query` escape hatch behind a flag, and an eval comparing it to the narrow tools.
