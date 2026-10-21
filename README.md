@@ -252,9 +252,39 @@ What this does not show:
 - That documentation is useless. Tool and parameter names here are self-explanatory, and every agent called `get_schema` first on its own. A larger or more ambiguous tool surface, or a weaker model, could behave differently.
 - Real dollar savings. These are raw input tokens; with prompt caching, repeated tool definitions are much cheaper, so the saving in cost is smaller than the token percentage. Smaller definitions still save context window and latency.
 
+### Wide surface: 17 tools (2026-10-21)
+
+Both runs used `claude-haiku-5-5` and `--prompt minimal`.
+
+**A. Is the bigger surface harder?** Hard tier (9 cases), 3 trials, 4 tools (`full`) vs 17 tools (`wide-full`):
+
+| Variant | Pass | Avg calls | Avg input tokens/run |
+| --- | --- | --- | --- |
+| full (4 tools) | 27/27 | 1.8 | 9,915 |
+| wide-full (17 tools) | 27/27 | 1.9 | 22,871 |
+
+No accuracy change. The 13 extra tools cost 2.3x the input tokens per run, because the definitions are re-sent every turn. Two cases took slightly more calls (`avg-errors-per-day` 1.3 to 1.7, `fast-upgraders` 2.0 to 2.7), so the extra tools caused some extra wandering, never a wrong answer.
+
+**B. Do descriptions matter on the wide tier?** 14 wide cases, **1 trial per case**:
+
+| Documentation | Pass | Avg calls | Avg input tokens/run | vs wide-full |
+| --- | --- | --- | --- | --- |
+| wide-full | 14/14 | 1.4 | 17,356 | |
+| wide-lean | 14/14 | 1.5 | 14,515 | -16% |
+| wide-short | 13/14 | 1.6 | 10,929 | -37% |
+| wide-none | 14/14 | 1.6 | 9,089 | -48% |
+
+The single failure was `wide-busy-signup-days` on `wide-short`: the agent never called `anomalies`. It fetched 28 daily signup counts with `trend` and did the standard-deviation arithmetic itself, getting 2 instead of 1. That is the failure mode the project is about (wrong tool choice leading to mental arithmetic). But it is one run, `wide-none` passed the same question, and `wide-full` needed 3 calls for it, so this is a hint, not a result.
+
+What this does and does not show:
+
+- Fewer descriptions cost nothing measurable in accuracy again, even with 17 overlapping tools. Descriptions are still the main lever on cost: `wide-none` used about half the input tokens of `wide-full`.
+- Haiku mostly picked the dedicated tool when one existed (for example `retention`, `top_users`, `count_users`), and in `wide-full` it needed fewer calls (1.4 vs 1.6). Better descriptions may buy efficiency rather than correctness.
+- One trial per case cannot separate a real 7-point gap from noise. Next: repeat with `--trials 3`.
+
 ### Next
 
-1. Run the wide-surface experiments (next section) and record what moved, including results that show nothing.
+1. Repeat experiment B with `--trials 3` to see whether the `wide-short` failure on `anomalies` repeats.
 2. If accuracy splits between documentation levels, find the smallest level that holds it.
 
 ## The wide tool surface (17 tools)
@@ -282,7 +312,7 @@ Variants `wide-full`, `wide-lean`, `wide-short`, `wide-none` change only the doc
 | wide-short | 8,275 | 2,758 | -57% |
 | wide-none | 7,209 | 2,403 | -63% |
 
-Run it (results not recorded yet; they will be added here as measured, including null results):
+Run it (results are in the Results section above):
 
 ```bash
 # is the bigger surface itself harder? (same hard-tier questions, 4 tools vs 17)
