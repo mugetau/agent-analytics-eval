@@ -11,12 +11,13 @@
  */
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { AnalyticsEvent } from "../events.js";
+import { buildWideCases } from "./cases_wide.js";
 import type { Expected } from "./grade.js";
 
 export interface EvalCase {
   id: string;
-  /** "core" = the first, easy set. "hard" = cases built to stress one design choice each (see `targets`). Default core. */
-  tier?: "core" | "hard";
+  /** "core" = the first, easy set. "hard" = cases built to stress one design choice each (see `targets`). "wide" = needs the 17-tool surface (wide-* variants). Default core. */
+  tier?: "core" | "hard" | "wide";
   /** For hard cases: which design choice this case is meant to exercise. */
   targets?: string;
   question: string;
@@ -143,6 +144,12 @@ export function buildCases(events: AnalyticsEvent[]): EvalCase[] {
   const topWeekday = topKey(tally(signups.map((e) => WEEKDAYS[new Date(e.timestamp).getUTCDay()]!)));
 
   // ---- cases ---------------------------------------------------------------------------------
+  return [
+    ...buildCoreAndHardCases(),
+    ...buildWideCases(events),
+  ];
+
+  function buildCoreAndHardCases(): EvalCase[] {
   return [
     {
       id: "total-signups",
@@ -339,4 +346,5 @@ export function buildCases(events: AnalyticsEvent[]): EvalCase[] {
       },
     },
   ];
+  }
 }

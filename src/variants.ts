@@ -25,20 +25,29 @@ export interface Variant {
   descriptions: DescriptionLevel;
   errorHints: boolean;
   precomputed: boolean;
+  /** Which tools the server exposes: the original 4 ("core") or those plus 13 more ("wide"). */
+  surface: Surface;
 }
 
-export const FULL: Variant = { name: "full", descriptions: "full", errorHints: true, precomputed: true };
+export type Surface = "core" | "wide";
+
+export const FULL: Variant = { name: "full", descriptions: "full", errorHints: true, precomputed: true, surface: "core" };
 
 export const VARIANTS: Record<string, Variant> = {
   full: FULL,
   // Description diet: same hints and precomputed fields, less documentation.
-  lean: { name: "lean", descriptions: "lean", errorHints: true, precomputed: true },
-  short: { name: "short", descriptions: "short", errorHints: true, precomputed: true },
+  lean: { name: "lean", descriptions: "lean", errorHints: true, precomputed: true, surface: "core" },
+  short: { name: "short", descriptions: "short", errorHints: true, precomputed: true, surface: "core" },
   // Ablations.
-  naive: { name: "naive", descriptions: "none", errorHints: false, precomputed: false },
-  "no-descriptions": { name: "no-descriptions", descriptions: "none", errorHints: true, precomputed: true },
-  "no-hints": { name: "no-hints", descriptions: "full", errorHints: false, precomputed: true },
-  "no-precompute": { name: "no-precompute", descriptions: "full", errorHints: true, precomputed: false },
+  naive: { name: "naive", descriptions: "none", errorHints: false, precomputed: false, surface: "core" },
+  "no-descriptions": { name: "no-descriptions", descriptions: "none", errorHints: true, precomputed: true, surface: "core" },
+  "no-hints": { name: "no-hints", descriptions: "full", errorHints: false, precomputed: true, surface: "core" },
+  "no-precompute": { name: "no-precompute", descriptions: "full", errorHints: true, precomputed: false, surface: "core" },
+  // Wide surface: 17 tools. Same three switches as the core levels, so only the documentation changes.
+  "wide-full": { name: "wide-full", descriptions: "full", errorHints: true, precomputed: true, surface: "wide" },
+  "wide-lean": { name: "wide-lean", descriptions: "lean", errorHints: true, precomputed: true, surface: "wide" },
+  "wide-short": { name: "wide-short", descriptions: "short", errorHints: true, precomputed: true, surface: "wide" },
+  "wide-none": { name: "wide-none", descriptions: "none", errorHints: true, precomputed: true, surface: "wide" },
 };
 
 /**

@@ -12,16 +12,18 @@ import { VARIANTS } from "../variants.js";
 import { connectInMemory } from "./connect.js";
 
 const events = generateEvents();
-const rows: { name: string; descriptions: string; chars: number }[] = [];
+const rows: { name: string; descriptions: string; chars: number; surface: string }[] = [];
 for (const v of Object.values(VARIANTS)) {
   const client = await connectInMemory(events, v);
   const { tools } = await client.listTools();
-  rows.push({ name: v.name, descriptions: v.descriptions, chars: JSON.stringify(tools).length });
+  rows.push({ name: v.name, descriptions: v.descriptions, chars: JSON.stringify(tools).length, surface: v.surface });
   await client.close();
 }
-const base = rows.find((r) => r.name === "full")!.chars;
+// Each surface is compared with its own full-documentation variant.
+const baseOf = (surface: string) => rows.find((r) => r.name === (surface === "wide" ? "wide-full" : "full"))!.chars;
 console.log("variant".padEnd(18) + "descriptions".padEnd(14) + "chars".padEnd(8) + "~tokens".padEnd(9) + "vs full");
 for (const r of rows) {
+  const base = baseOf(r.surface);
   const delta = r.chars === base ? "" : `${(((r.chars - base) / base) * 100).toFixed(0)}%`;
   console.log(r.name.padEnd(18) + r.descriptions.padEnd(14) + String(r.chars).padEnd(8) + String(Math.round(r.chars / 3)).padEnd(9) + delta);
 }

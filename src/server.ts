@@ -15,12 +15,13 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { AnalyticsError, breakdown, funnel, schema, trend } from "./analytics.js";
 import type { AnalyticsEvent } from "./events.js";
+import { registerWideTools } from "./tools_wide.js";
 import { FULL, stripPrecomputed, type DescriptionLevel, type Variant } from "./variants.js";
 
-type ToolResult = { content: { type: "text"; text: string }[]; isError?: boolean };
+export type ToolResult = { content: { type: "text"; text: string }[]; isError?: boolean };
 
-type ToolTexts = Record<DescriptionLevel, string>;
-type ParamTexts = Partial<Record<Exclude<DescriptionLevel, "none">, string>>;
+export type ToolTexts = Record<DescriptionLevel, string>;
+export type ParamTexts = Partial<Record<Exclude<DescriptionLevel, "none">, string>>;
 
 /** Tool descriptions for every level. Exported so tests and the size script can inspect them. */
 export const TOOL_TEXTS: Record<"get_schema" | "trend" | "funnel" | "breakdown", ToolTexts> = {
@@ -194,6 +195,10 @@ export function createServer(events: AnalyticsEvent[], variant: Variant = FULL):
     },
     async (args) => run("breakdown", () => breakdown(events, args)),
   );
+
+  if (variant.surface === "wide") {
+    registerWideTools(server, { events, level, d, date, eventName, uniqueUsers, filterShape, run });
+  }
 
   return server;
 }

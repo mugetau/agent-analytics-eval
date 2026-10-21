@@ -5,15 +5,19 @@ import { generateEvents } from "../src/events.js";
 import { buildCases } from "../src/eval/cases.js";
 import { connectInMemory } from "../src/eval/connect.js";
 import { grade } from "../src/eval/grade.js";
+import { VARIANTS } from "../src/variants.js";
 
 const events = generateEvents();
 let client: Client;
+let wideClient: Client;
 
 before(async () => {
   client = await connectInMemory(events);
+  wideClient = await connectInMemory(events, VARIANTS["wide-full"]);
 });
 after(async () => {
   await client.close();
+  await wideClient.close();
 });
 
 describe("MCP surface", () => {
@@ -41,7 +45,7 @@ describe("MCP surface", () => {
 describe("oracle: the tool surface can answer every eval question", () => {
   for (const c of buildCases(events)) {
     it(c.id, async () => {
-      const g = grade(c.expected, await c.oracle(client));
+      const g = grade(c.expected, await c.oracle(c.tier === "wide" ? wideClient : client));
       assert.ok(g.pass, `${g.reason} (got ${g.got})`);
     });
   }

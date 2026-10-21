@@ -7,7 +7,7 @@
  */
 import type { AnalyticsEvent, PropValue } from "./events.js";
 
-const DAY_MS = 86_400_000;
+export const DAY_MS = 86_400_000;
 
 export class AnalyticsError extends Error {
   constructor(
@@ -25,10 +25,10 @@ export interface Filter {
   equals: PropValue;
 }
 
-const round2 = (x: number) => Math.round(x * 100) / 100;
-const toDay = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+export const round2 = (x: number) => Math.round(x * 100) / 100;
+export const toDay = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
-function weekStart(day: string): string {
+export function weekStart(day: string): string {
   const d = new Date(`${day}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); // Monday
   return d.toISOString().slice(0, 10);
@@ -61,7 +61,7 @@ function eventNames(events: AnalyticsEvent[]): string[] {
   return [...new Set(events.map((e) => e.event))].sort();
 }
 
-function assertEvent(events: AnalyticsEvent[], name: unknown, label = "event"): asserts name is string {
+export function assertEvent(events: AnalyticsEvent[], name: unknown, label = "event"): asserts name is string {
   const names = eventNames(events);
   if (typeof name !== "string" || !names.includes(name)) {
     const suggestion = typeof name === "string" ? closest(name, names) : undefined;
@@ -78,7 +78,7 @@ function propertyKeys(events: AnalyticsEvent[], eventName: string): string[] {
   return [...keys].sort();
 }
 
-function assertProperty(events: AnalyticsEvent[], eventName: string, property: unknown, label = "property"): asserts property is string {
+export function assertProperty(events: AnalyticsEvent[], eventName: string, property: unknown, label = "property"): asserts property is string {
   const keys = propertyKeys(events, eventName);
   if (typeof property !== "string" || !keys.includes(property)) {
     throw new AnalyticsError(
@@ -88,7 +88,7 @@ function assertProperty(events: AnalyticsEvent[], eventName: string, property: u
   }
 }
 
-function parseDay(value: string, label: string): number {
+export function parseDay(value: string, label: string): number {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw new AnalyticsError(
       `"${label}" must be a date in YYYY-MM-DD format, got ${JSON.stringify(value)}.`,
@@ -102,14 +102,14 @@ function parseDay(value: string, label: string): number {
   return ms;
 }
 
-interface Range {
+export interface Range {
   from: string;
   to: string;
   startMs: number;
   endMs: number; // exclusive
 }
 
-function resolveRange(events: AnalyticsEvent[], from?: string, to?: string): Range {
+export function resolveRange(events: AnalyticsEvent[], from?: string, to?: string): Range {
   let min = Infinity;
   let max = -Infinity;
   for (const e of events) {
@@ -127,7 +127,7 @@ function resolveRange(events: AnalyticsEvent[], from?: string, to?: string): Ran
   return { from: f, to: t, startMs, endMs };
 }
 
-function applyFilter(events: AnalyticsEvent[], eventName: string, filter?: Filter): (e: AnalyticsEvent) => boolean {
+export function applyFilter(events: AnalyticsEvent[], eventName: string, filter?: Filter): (e: AnalyticsEvent) => boolean {
   if (!filter) return () => true;
   assertProperty(events, eventName, filter.property, "filter property");
   return (e) => e.properties[filter.property] === filter.equals;

@@ -13,10 +13,10 @@ Building for agents is different from building for people. An agent can't skim a
 | Part | Where | What it does |
 | --- | --- | --- |
 | Synthetic dataset | `src/events.ts` | ~10k seeded events (signups, onboarding, errors, ...) with **planted ground truth**: a payment-error spike and a Safari-only conversion regression |
-| Query layer | `src/analytics.ts` | Pure functions: `schema`, `trend`, `funnel`, `breakdown`. Every error carries a hint that tells the agent how to fix its next call |
-| MCP server | `src/server.ts`, `src/index.ts` | Four tools over stdio, with descriptions written for agents |
-| Evals | `src/eval/` | 19 graded questions in two tiers, an **oracle** run (no LLM) and an **agent** run (Claude via the Anthropic API) |
-| Tests | `test/` | 56 tests, including "the tool surface can answer every eval question" |
+| Query layer | `src/analytics.ts`, `src/analytics_extra.ts` | Pure functions: the core four (`schema`, `trend`, `funnel`, `breakdown`) plus 13 more for the wide surface. Every error carries a hint that tells the agent how to fix its next call |
+| MCP server | `src/server.ts`, `src/tools_wide.ts`, `src/index.ts` | Four tools over stdio (17 with the `wide-*` variants), with descriptions written for agents |
+| Evals | `src/eval/` | 33 graded questions in three tiers (core, hard, wide), an **oracle** run (no LLM) and an **agent** run (Claude via the Anthropic API) |
+| Tests | `test/` | 76 tests, including "the tool surface can answer every eval question" |
 
 ## Quick start
 
@@ -25,7 +25,7 @@ Requires Node 20+.
 ```bash
 npm install
 npm test                 # unit tests + oracle check, no API key needed
-npm run eval:oracle      # scripted tool calls, proves the tools can answer all 19 questions
+npm run eval:oracle      # scripted tool calls, proves the tools can answer the 19 core/hard questions (add `-- --variant wide-full` for all 33)
 npm run serve            # start the MCP server on stdio
 ```
 
@@ -254,8 +254,42 @@ What this does not show:
 
 ### Next
 
-1. Test a larger tool surface: add realistic tools (retention, cohorts, user lookup) in their own tier of cases, re-baseline, and compare documentation levels again. This is the one setup left where descriptions could plausibly decide tool choice.
-2. If accuracy splits there, find the smallest documentation level that holds it, and record what moved here, including results that show nothing.
+1. Run the wide-surface experiments (next section) and record what moved, including results that show nothing.
+2. If accuracy splits between documentation levels, find the smallest level that holds it.
+
+## The wide tool surface (17 tools)
+
+Every result above came from a four-tool server, where all documentation levels scored 100%. To test whether descriptions matter when choosing a tool is genuinely hard, the `wide-*` variants add 13 tools after the original four:
+
+| Tool | Does | Overlaps with |
+| --- | --- | --- |
+| `active_users` | distinct users with any event, per day/week | `trend` + `unique_users` |
+| `retention` | day-N retention for a cohort event and a return event | `funnel` (sort of) |
+| `time_between` | mean/median/p90 hours between two events | nothing (new capability) |
+| `compare_periods` | one event's count in two periods, with % change | two `trend` calls + arithmetic |
+| `anomalies` | days/weeks above mean + k standard deviations | `trend` peak |
+| `top_users`, `events_per_user` | rank users / average per user | `breakdown` |
+| `user_profile`, `user_events` | one user's summary / raw event sequence | nothing |
+| `count_users`, `count_events` | one number, with optional filter | `trend` totals |
+| `event_first_last`, `get_property_values` | first/last time; distinct values | `trend`, `breakdown` |
+
+Variants `wide-full`, `wide-lean`, `wide-short`, `wide-none` change only the documentation (hints and precomputed fields stay on). The 14 `wide` cases use every new tool at least once (a test enforces it) and include one unanswerable question (day-30 retention when the data ends first). Sizes of the tool definitions (`npm run tools:size`):
+
+| Variant | Chars | ~Tokens | vs wide-full |
+| --- | --- | --- | --- |
+| wide-full | 19,467 | 6,489 | |
+| wide-lean | 13,288 | 4,429 | -32% |
+| wide-short | 8,275 | 2,758 | -57% |
+| wide-none | 7,209 | 2,403 | -63% |
+
+Run it (results not recorded yet; they will be added here as measured, including null results):
+
+```bash
+# is the bigger surface itself harder? (same hard-tier questions, 4 tools vs 17)
+npm run eval:agent -- --tier hard --variant full,wide-full --prompt minimal --trials 3
+# do descriptions matter now? start with 1 trial to check cost
+npm run eval:agent -- --tier wide --variant wide-full,wide-lean,wide-short,wide-none --prompt minimal --trials 1
+```
 
 ## Limitations
 

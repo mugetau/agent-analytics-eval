@@ -6,7 +6,8 @@
  *   npm run eval:agent -- --trials 3                  repeat each question 3 times (LLM answers vary between runs)
  *   npm run eval:agent -- --variant full,naive        run the same questions against several server variants and compare
  *   npm run eval:agent -- --variant all --trials 3    every variant (see src/variants.ts)
- *   npm run eval:agent -- --tier hard                 only the harder cases (core | hard | all, default all)
+ *   npm run eval:agent -- --tier hard                 only the harder cases (core | hard | wide | all, default all)
+ *   npm run eval:agent -- --tier wide --variant wide-full,wide-short   17-tool surface, wide cases (wide variants only)
  *   npm run eval:agent -- --prompt minimal            give the agent only answer-format rules, no guidance (default: guided)
  *   npm run eval:agent -- --case error-spike-day --model <model-id> --max-turns 8
  *
@@ -169,7 +170,13 @@ async function runVariant(
 ): Promise<VariantReport> {
   const events = generateEvents();
   const client = await connectInMemory(events, variant);
-  const cases = buildCases(events).filter((c) => (!opts.only || c.id === opts.only) && (opts.tier === "all" || (c.tier ?? "core") === opts.tier));
+  // Wide cases need the 17-tool server; core-surface variants skip them.
+  const cases = buildCases(events).filter(
+    (c) =>
+      (!opts.only || c.id === opts.only) &&
+      (opts.tier === "all" || (c.tier ?? "core") === opts.tier) &&
+      (variant.surface === "wide" || c.tier !== "wide"),
+  );
   if (cases.length === 0) throw new Error(`No case matches (case=${opts.only ?? "any"}, tier=${opts.tier})`);
 
   console.log(`\n=== variant: ${variant.name}${mode === "agent" ? ` (prompt: ${opts.prompt})` : ""} ===`);
@@ -197,7 +204,7 @@ async function runVariant(
     const label = passes === opts.trials ? "PASS " : passes === 0 ? "FAIL " : "FLAKY";
     const firstFailure = runs.find((r) => !r.pass)?.reason ?? "";
     console.log(
-      `${label} ${c.id.padEnd(22)} ${String(passes).padStart(2)}/${opts.trials}  avg calls=${summary.avg_tool_calls.toFixed(1)}  ${passes === opts.trials ? "" : firstFailure}`,
+      `${label} ${c.id.padEnd(36)} ${String(passes).padStart(2)}/${opts.trials}  avg calls=${summary.avg_tool_calls.toFixed(1)}  ${passes === opts.trials ? "" : firstFailure}`,
     );
   }
 
@@ -219,7 +226,7 @@ async function runVariant(
         mode,
         variant: variant.name,
         prompt: mode === "agent" ? opts.prompt : null,
-        variant_settings: { descriptions: variant.descriptions, errorHints: variant.errorHints, precomputed: variant.precomputed },
+        variant_settings: { descriptions: variant.descriptions, errorHints: variant.errorHints, precomputed: variant.precomputed, surface: variant.surface },
         model: mode === "agent" ? opts.model : null,
         trials: opts.trials,
         run_at: new Date().toISOString(),
@@ -255,13 +262,13 @@ function printComparison(reports: VariantReport[]) {
   }
   console.log("\nper case (passes/trials, avg calls):");
   const ids = [...reports[0]!.perCase.keys()];
-  console.log("case".padEnd(24) + reports.map((r) => r.variant.padEnd(18)).join(""));
+  console.log("case".padEnd(36) + reports.map((r) => r.variant.padEnd(18)).join(""));
   for (const id of ids) {
     const cells = reports.map((r) => {
       const c = r.perCase.get(id)!;
       return `${c.passes}/${c.trials} (${c.avgCalls.toFixed(1)})`.padEnd(18);
     });
-    console.log(id.padEnd(24) + cells.join(""));
+    console.log(id.padEnd(36) + cells.join(""));
   }
 }
 
@@ -287,7 +294,7 @@ async function main() {
   const trials = mode === "agent" ? Number(values.trials) : 1;
   if (!Number.isInteger(trials) || trials < 1 || trials > 20) throw new Error("--trials must be an integer from 1 to 20");
 
-  if (!(["core", "hard", "all"] as string[]).includes(values.tier!)) throw new Error('--tier must be "core", "hard" or "all"');
+  if (!(["core", "hard", "wide", "all"] as string[]).includes(values.tier!)) throw new Error('--tier must be "core", "hard", "wide" or "all"');
 
   const prompt = values.prompt as PromptName;
   if (!PROMPT_NAMES.includes(prompt)) throw new Error(`--prompt must be one of: ${PROMPT_NAMES.join(", ")}`);
@@ -298,8 +305,11 @@ async function main() {
     if (!v) throw new Error(`Unknown variant "${name}". Choose from: ${Object.keys(VARIANTS).join(", ")}, or "all".`);
     return v;
   });
-  if (mode === "oracle" && (variants.length !== 1 || variants[0]!.name !== "full")) {
-    throw new Error("The oracle run only works with the full server (its scripted calls read precomputed fields). Use --mode agent to compare variants.");
+  if (mode === "oracle" && (variants.length !== 1 || !["full", "wide-full"].includes(variants[0]!.name))) {
+    throw new Error("The oracle run only works with the full server (full, or wide-full for the wide tier): its scripted calls read precomputed fields. Use --mode agent to compare variants.");
+  }
+  if (values.tier === "wide" && variants.some((v) => v.surface !== "wide")) {
+    throw new Error('--tier wide needs wide variants only (wide-full, wide-lean, wide-short, wide-none).');
   }
 
   const reports: VariantReport[] = [];
